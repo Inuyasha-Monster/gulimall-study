@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,17 +41,17 @@ public class CategoryController {
         List<CategoryEntity> categoryEntities = categoryService.listWithTree();
         //找到所有的一级分类
         List<CategoryEntity> level1Menus = categoryEntities.stream()
-                                                           .filter(item -> item.getParentCid() == 0)
-                                                           .map(menu -> {
-                                                               menu.setChildren(getChildrens(menu, categoryEntities));
-                                                               return menu;
-                                                           })
-                                                           .sorted((menu1, menu2) -> {
+                .filter(item -> item.getParentCid() == 0)
+                .map(menu -> {
+                    menu.setChildren(getChildrens(menu, categoryEntities));
+                    return menu;
+                })
+                .sorted((menu1, menu2) -> {
 
-                                                               return (menu1.getSort() == null ? 0 : menu1.getSort()) - (menu2.getSort() == null ? 0 : menu2.getSort());
+                    return (menu1.getSort() == null ? 0 : menu1.getSort()) - (menu2.getSort() == null ? 0 : menu2.getSort());
 
-                                                           })
-                                                           .collect(Collectors.toList());
+                })
+                .collect(Collectors.toList());
         return R.ok().put("data", level1Menus);
     }
 
@@ -106,6 +107,19 @@ public class CategoryController {
     }
 
     /**
+     * 更新拖拽节点后的节点信息（包含节点的顺序和节点层级的更新）
+     */
+    @RequestMapping("/update/sort")
+    public R updateSort(@RequestBody CategoryEntity[] category) {
+        if (category == null || category.length == 0) {
+            return R.ok();
+        }
+        categoryService.updateBatchById(Arrays.asList(category));
+
+        return R.ok();
+    }
+
+    /**
      * 修改
      */
     @RequestMapping("/update")
@@ -122,8 +136,10 @@ public class CategoryController {
     @RequestMapping("/delete")
     //@RequiresPermissions("product:category:delete")
     public R delete(@RequestBody Long[] catIds) {
+        //删除之前需要判断待删除的菜单那是否被别的地方所引用。
         categoryService.removeByIds(Arrays.asList(catIds));
 
+//        categoryService.removeMenuByIds(Arrays.asList(catIds));
         return R.ok();
     }
 

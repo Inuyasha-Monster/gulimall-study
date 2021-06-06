@@ -38,4 +38,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         return categoryEntities;
     }
 
+    @Override
+    public void removeMenuByIds(List<Long> asList) {
+
+    }
+
 }
