@@ -26,3 +26,8 @@ mybatis-plus:
 
 server:
   port: 10000
+
+logging:
+  level:
+    root: warn
+    com.atguigu.gulimall.product: debug

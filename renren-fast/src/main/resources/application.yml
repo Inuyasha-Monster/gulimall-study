@@ -46,6 +46,8 @@ spring:
     alicloud:
       oss:
         enabled: false
+#  main:
+#    allow-bean-definition-overriding: true
 #  resources:
 #    add-mappings: false
 
