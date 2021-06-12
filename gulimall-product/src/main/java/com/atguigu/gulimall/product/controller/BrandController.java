@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.atguigu.common.valid.AddGroup;
+import com.atguigu.common.valid.UpdateGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,8 +66,8 @@ public class BrandController {
      */
     @RequestMapping("/save")
     //@RequiresPermissions("product:brand:save")
-    public R save(@Valid @RequestBody BrandEntity brand /*, BindingResult result*/) {
-//
+    public R save(@Validated(value = {AddGroup.class}) @RequestBody BrandEntity brand /*, BindingResult result*/) {
+
 //        if (result.hasErrors()) {
 //            Map<String, String> hashMap = new HashMap<>(16);
 //            //获取校验的错误结果
@@ -77,6 +80,7 @@ public class BrandController {
 //        } else {
 //            brandService.save(brand);
 //        }
+
         brandService.save(brand);
         return R.ok();
     }
@@ -86,7 +90,7 @@ public class BrandController {
      */
     @RequestMapping("/update")
     //@RequiresPermissions("product:brand:update")
-    public R update(@RequestBody BrandEntity brand) {
+    public R update(@Validated(value = {UpdateGroup.class}) @RequestBody BrandEntity brand) {
         brandService.updateById(brand);
 
         return R.ok();
