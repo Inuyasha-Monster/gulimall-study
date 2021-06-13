@@ -7,6 +7,7 @@ import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.atguigu.gulimall.product.entity.AttrEntity;
+import com.atguigu.gulimall.product.service.AttrAttrgroupRelationService;
 import com.atguigu.gulimall.product.service.AttrService;
 import com.atguigu.gulimall.product.service.CategoryService;
 import com.atguigu.gulimall.product.vo.AttrGroupRelationVo;
@@ -32,7 +33,6 @@ public class AttrGroupController {
     @Autowired
     private AttrGroupService attrGroupService;
 
-
     @Autowired
     private CategoryService categoryService;
 
@@ -40,15 +40,36 @@ public class AttrGroupController {
     @Autowired
     private AttrService attrService;
 
+    @Autowired
+    AttrAttrgroupRelationService relationService;
+
+    /**
+     * 获取属性分组中，没有关联被其他属性分组和自身所关联的其他属性
+     * API:https://easydoc.xyz/doc/75716633/ZUqEdvA4/d3EezLdO
+     * /product/attrgroup/{attrgroupId}/noattr/relation
+     *
+     * @param attrgroupId
+     * @param params
+     * @return
+     */
+    @GetMapping("/{attrgroupId}/noattr/relation")
+    public R attrNoRelation(@PathVariable("attrgroupId") Long attrgroupId,
+                            @RequestParam Map<String, Object> params) {
+        PageUtils page = attrService.getNoRelationAttr(attrgroupId, params);
+        return R.ok().put("page", page);
+    }
+
+
     /**
      * 删除属性与分组的关联关系
      * API: https://easydoc.xyz/doc/75716633/ZUqEdvA4/qn7A2Fht
+     *
      * @param attrGroupRelationVos
      * @return
      */
     ///product/attrgroup/attr/relation/delete
     @PostMapping("/attr/relation/delete")
-    public R delAttrRelation(@RequestBody AttrGroupRelationVo[] attrGroupRelationVos){
+    public R delAttrRelation(@RequestBody AttrGroupRelationVo[] attrGroupRelationVos) {
         attrService.deleteRelation(attrGroupRelationVos);
 
         return R.ok();
@@ -58,13 +79,26 @@ public class AttrGroupController {
      * 获取属性分组的关联的所有属性
      * API:https://easydoc.xyz/doc/75716633/ZUqEdvA4/LnjzZHPj
      * //product/attrgroup/{attrgroupId}/attr/relation
+     *
      * @param attrgroupId 分组ID
      * @return
      */
     @GetMapping("{attrgroupId}/attr/relation")
-    public R attrRelation(@PathVariable("attrgroupId") Long attrgroupId){
+    public R attrRelation(@PathVariable("attrgroupId") Long attrgroupId) {
         List<AttrEntity> entityList = attrService.getRelationAtr(attrgroupId);
-        return R.ok().put("data",entityList);
+        return R.ok().put("data", entityList);
+    }
+
+
+    /**功能：添加属性和属性分组的关联关系
+     * API：<https://easydoc.xyz/doc/75716633/ZUqEdvA4/VhgnaedC
+     * @param relationVo
+     * @return
+     */
+    @PostMapping("/attr/relation")
+    public R saveAttrRelation(@RequestBody List<AttrGroupRelationVo> relationVo){
+        relationService.saveAttrRelations(relationVo);
+        return  R.ok();
     }
 
     /**
