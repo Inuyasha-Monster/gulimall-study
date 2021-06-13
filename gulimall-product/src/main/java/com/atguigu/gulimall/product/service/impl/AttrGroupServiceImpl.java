@@ -1,7 +1,11 @@
 package com.atguigu.gulimall.product.service.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Map;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -24,6 +28,31 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
         );
 
         return new PageUtils(page);
+    }
+
+    @Override
+    public PageUtils queryPage(Map<String, Object> params, Long catalogId) {
+
+        String key = (String) params.get("key");
+
+        QueryWrapper<AttrGroupEntity> wrapper = new QueryWrapper<>();
+        if (catalogId != 0) {
+            wrapper.eq("catelog_id", catalogId);
+        }
+
+        if (StringUtils.isNotEmpty(key)) {
+            wrapper.and(x -> {
+                x.eq("attr_group_id", key)
+                        .or()
+                        .like("attr_group_name", key);
+            });
+        }
+
+        IPage<AttrGroupEntity> page = this.page(new Query<AttrGroupEntity>().getPage(params), wrapper);
+
+        return new PageUtils(page);
+
+
     }
 
 }
