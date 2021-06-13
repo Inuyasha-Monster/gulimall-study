@@ -112,7 +112,7 @@ public class AttrController {
     //@RequiresPermissions("product:attr:delete")
     public R delete(@RequestBody Long[] attrIds) {
         attrService.removeByIds(Arrays.asList(attrIds));
-
+        // todo:属性删除需要连带属性分组关系表的数据也跟着删除
         return R.ok();
     }
 
