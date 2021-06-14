@@ -6,6 +6,7 @@ import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.atguigu.gulimall.product.entity.ProductAttrValueEntity;
+import com.atguigu.gulimall.product.service.ProductAttrValueService;
 import com.atguigu.gulimall.product.vo.AttrResponseVo;
 import com.atguigu.gulimall.product.vo.AttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,33 @@ public class AttrController {
 
     @Autowired
     private AttrService attrService;
+
+    @Autowired
+    private ProductAttrValueService productAttrValueService;
+
+    /**
+     * 功能：修改商品规格
+     * API：https://easydoc.xyz/doc/75716633/ZUqEdvA4/GhnJ0L85
+     *
+     * @param spuId
+     * @param entities
+     * @return
+     */
+    @PostMapping("/update/{spuId}")
+    public R update(@PathVariable("spuId") Long spuId, @RequestBody List<ProductAttrValueEntity> entities) {
+        productAttrValueService.updateSpuAttr(spuId, entities);
+        return R.ok();
+    }
+
+    /**
+     * 功能：根据spuId信息查询出对应的规格参数信息
+     * API：https://easydoc.xyz/doc/75716633/ZUqEdvA4/GhhJhkg7
+     */
+    @GetMapping("/base/listforspu/{spuId}")
+    public R listForSpu(@PathVariable("spuId") Long spuId) {
+        List<ProductAttrValueEntity> entityList = productAttrValueService.baseAttrListForSpu(spuId);
+        return R.ok().put("data", entityList);
+    }
 
     /**
      * 获取分类规格参数或获取分类销售属性
