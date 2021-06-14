@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableDiscoveryClient
 @MapperScan("com.atguigu.gulimall.ware.dao")
 @SpringBootApplication
-@EnableFeignClients
+@EnableFeignClients("com.atguigu.gulimall.ware.feign")
 public class GulimallWareApplication {
 
     public static void main(String[] args) {
