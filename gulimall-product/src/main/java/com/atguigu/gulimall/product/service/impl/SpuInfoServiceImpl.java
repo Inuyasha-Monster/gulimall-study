@@ -78,6 +78,8 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         BeanUtils.copyProperties(spuSaveVo, spuInfoEntity);
         spuInfoEntity.setCreateTime(new Date());
         spuInfoEntity.setUpdateTime(new Date());
+        // 补充设置spu默认发布状态为:0-新建 1-上架 2-下架
+        spuInfoEntity.setPublishStatus(0);
 
         this.saveBaseSpuInfo(spuInfoEntity);
         //2. 保存SPU的描述图片；pms_spu_info_desc
@@ -189,6 +191,41 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
             });
 
         }
+    }
+
+    @Override
+    public PageUtils queryPageByCondition(Map<String, Object> params) {
+        QueryWrapper<SpuInfoEntity> queryWrapper = new QueryWrapper<>();
+
+        String key = (String) params.get("key");
+        if (StringUtils.isNotEmpty(key)) {
+            // 将如下条件写法可以形成小括号的形式 (  id = ? or spu_name like xxx )
+            queryWrapper.and(item -> {
+                item.eq("id", key).or().like("spu_name", key);
+            });
+        }
+        // 可以形成sql语句: ( id = ? or spu_name like xxx ) and publish_status = 0
+        String status = (String) params.get("status");
+        if (StringUtils.isNotEmpty(status)) {
+            queryWrapper.eq("publish_status", status);
+        }
+
+        String brandId = (String) params.get("brandId");
+        if (StringUtils.isNotEmpty(brandId) && (!"0".equalsIgnoreCase(brandId))) {
+            queryWrapper.eq("brand_id", brandId);
+        }
+
+        String catelogId = (String) params.get("catelogId");
+        if (StringUtils.isNotEmpty(catelogId) && (!"0".equalsIgnoreCase(catelogId))) {
+            queryWrapper.eq("catalog_id", catelogId);
+        }
+
+        IPage<SpuInfoEntity> page = this.page(
+                new Query<SpuInfoEntity>().getPage(params),
+                queryWrapper
+        );
+
+        return new PageUtils(page);
     }
 
 }

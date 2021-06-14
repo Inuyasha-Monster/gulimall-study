@@ -10,6 +10,8 @@ spring:
     nacos:
       discovery:
         server-addr: localhost:8848
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
 #    alicloud:
 #      access-key: xx
 #      secret-key: xxx
