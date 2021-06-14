@@ -62,6 +62,9 @@ public class SpuInfoController {
     //@RequiresPermissions("product:spuinfo:save")
     public R save(@RequestBody SpuSaveVo spuSaveVo){
 //		spuInfoService.save(spuInfo);
+
+        // todo:接收参数检查
+
         spuInfoService.saveSpuInfo(spuSaveVo);
         return R.ok();
     }
