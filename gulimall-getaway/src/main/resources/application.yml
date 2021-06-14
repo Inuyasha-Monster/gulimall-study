@@ -3,6 +3,13 @@ spring:
     gateway:
       routes:
 
+        - id: ware_route
+          uri: lb://gulimall-ware
+          predicates:
+            - Path=/api/ware/**
+          filters:
+            - RewritePath=/api/(?<segment>/?.*),/$\{segment}
+
         - id: member_route
           uri: lb://gulimall-member
           predicates:
