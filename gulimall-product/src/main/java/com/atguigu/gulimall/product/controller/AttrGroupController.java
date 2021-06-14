@@ -11,6 +11,7 @@ import com.atguigu.gulimall.product.service.AttrAttrgroupRelationService;
 import com.atguigu.gulimall.product.service.AttrService;
 import com.atguigu.gulimall.product.service.CategoryService;
 import com.atguigu.gulimall.product.vo.AttrGroupRelationVo;
+import com.atguigu.gulimall.product.vo.AttrGroupWithAttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +43,16 @@ public class AttrGroupController {
 
     @Autowired
     AttrAttrgroupRelationService relationService;
+
+    /**
+     * 功能描述：获取分类下所有分组&关联属性
+     * API：https://easydoc.xyz/doc/75716633/ZUqEdvA4/6JM6txHf
+     */
+    @GetMapping("{catelogId}/withattr")
+    public R getAttrGroupWithAttr(@PathVariable("catelogId") Long catelogId) {
+        List<AttrGroupWithAttrVo> vos = attrGroupService.getAttrGroupWithAttrsByCatelogId(catelogId);
+        return R.ok().put("data", vos);
+    }
 
     /**
      * 获取属性分组中，没有关联被其他属性分组和自身所关联的其他属性
@@ -90,15 +101,17 @@ public class AttrGroupController {
     }
 
 
-    /**功能：添加属性和属性分组的关联关系
+    /**
+     * 功能：添加属性和属性分组的关联关系
      * API：<https://easydoc.xyz/doc/75716633/ZUqEdvA4/VhgnaedC
+     *
      * @param relationVo
      * @return
      */
     @PostMapping("/attr/relation")
-    public R saveAttrRelation(@RequestBody List<AttrGroupRelationVo> relationVo){
+    public R saveAttrRelation(@RequestBody List<AttrGroupRelationVo> relationVo) {
         relationService.saveAttrRelations(relationVo);
-        return  R.ok();
+        return R.ok();
     }
 
     /**

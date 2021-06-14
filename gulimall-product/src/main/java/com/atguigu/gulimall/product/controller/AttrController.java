@@ -37,17 +37,18 @@ public class AttrController {
      * API:https://easydoc.xyz/doc/75716633/ZUqEdvA4/FTx6LRbR
      * 分类规格参数：/product/attr/base/list/{catelogId}
      * 分类销售属性：/product/attr/sale/list/{catelogId}
+     *
      * @param params
      * @param cateLogId
-     * @param attrType 属性类型[0-销售属性，1-基本属性，
+     * @param attrType  属性类型[0-销售属性，1-基本属性，
      * @return
      */
     @RequestMapping("/{attrType}/list/{catelogId}")
-    public R baseAttrList(@RequestParam Map<String,Object> params,
+    public R baseAttrList(@RequestParam Map<String, Object> params,
                           @PathVariable("attrType") String attrType,
-                          @PathVariable("catelogId") Long cateLogId){
-        PageUtils page = attrService.queryBaseAttrPage(params,cateLogId,attrType);
-        return R.ok().put("page",page);
+                          @PathVariable("catelogId") Long cateLogId) {
+        PageUtils page = attrService.queryBaseAttrPage(params, cateLogId, attrType);
+        return R.ok().put("page", page);
     }
 
     /**
@@ -70,7 +71,7 @@ public class AttrController {
     public R info(@PathVariable("attrId") Long attrId) {
 //        AttrEntity attr = attrService.getById(attrId);
 
-        AttrResponseVo responseVo=attrService.getAttrInfo(attrId);
+        AttrResponseVo responseVo = attrService.getAttrInfo(attrId);
         return R.ok().put("attr", responseVo);
     }
 
