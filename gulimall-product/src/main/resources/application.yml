@@ -12,6 +12,9 @@ spring:
         server-addr: localhost:8848
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
+  thymeleaf:
+    cache: false
+
 #    alicloud:
 #      access-key: xx
 #      secret-key: xxx
