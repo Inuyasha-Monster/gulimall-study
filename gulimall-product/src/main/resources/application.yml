@@ -13,7 +13,7 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
   thymeleaf:
-    cache: false
+    cache: false # 上线前调整为 true
 
 #    alicloud:
 #      access-key: xx

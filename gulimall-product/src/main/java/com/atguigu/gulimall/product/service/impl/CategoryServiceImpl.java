@@ -33,6 +33,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     @Autowired
     CategoryBrandRelationService relationService;
 
+    /**
+     * 模拟本地进程缓存
+     */
+    private final Map<String, Object> localCacheMap = new HashMap<>();
+
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
         IPage<CategoryEntity> page = this.page(
@@ -82,6 +87,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Override
     public Map<String, List<Catelog2Vo>> getCatelogJson() {
+
+        // 检查本地进程缓存存在则直接返回,海量并发的情况是有问题的,以及缓存同步数据库和分布式环境的问题
+        Map<String, List<Catelog2Vo>> catelogJson = (Map<String, List<Catelog2Vo>>) localCacheMap.get("getCatelogJson");
+        if (catelogJson != null) {
+            return catelogJson;
+        }
+
         log.info("getCatelogJson 查询数据库");
         //一次性查询出所有的分类数据，减少对于数据库的访问次数，后面的数据操作并不是到数据库中查询，而是直接从这个集合中获取，
         // 由于分类信息的数据量并不大，所以这种方式是可行的
@@ -116,6 +128,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
             // maybe null return
             return catelog2Vos;
         }));
+
+        // put data to localCache
+        localCacheMap.put("getCatelogJson", parent_cid);
+
         return parent_cid;
     }
 
