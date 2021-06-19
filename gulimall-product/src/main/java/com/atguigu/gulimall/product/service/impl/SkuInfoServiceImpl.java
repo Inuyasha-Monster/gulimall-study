@@ -1,9 +1,13 @@
 package com.atguigu.gulimall.product.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.service.additional.query.impl.LambdaQueryChainWrapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -81,6 +85,26 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
 
         return new PageUtils(page);
 
+    }
+
+    @Override
+    public List<SkuInfoEntity> getSkusBySpuId(Long spuId) {
+
+        // 直接使用lambda表达式链式查询数据,避免使用硬编码字段名称
+//        return lambdaQuery().eq(SkuInfoEntity::getSpuId, spuId).list();
+
+        // 使用lambda表达式结合wrapper的用法
+//        LambdaQueryWrapper<SkuInfoEntity> wrapper = Wrappers.<SkuInfoEntity>lambdaQuery();
+//        wrapper.eq(SkuInfoEntity::getSpuId, spuId);
+//        List<SkuInfoEntity> entities = this.baseMapper.selectList(wrapper);
+
+        // 直接把mapper通过lambda表达式包裹起来使用
+//        LambdaQueryChainWrapper<SkuInfoEntity> chainWrapper = new LambdaQueryChainWrapper<>(this.baseMapper);
+//        List<SkuInfoEntity> list = chainWrapper.eq(SkuInfoEntity::getSpuId, spuId).list();
+
+        QueryWrapper<SkuInfoEntity> queryWrapper = new QueryWrapper<SkuInfoEntity>().eq("spu_id", spuId);
+        List<SkuInfoEntity> skuInfoEntities = this.list(queryWrapper);
+        return skuInfoEntities;
     }
 
 }
