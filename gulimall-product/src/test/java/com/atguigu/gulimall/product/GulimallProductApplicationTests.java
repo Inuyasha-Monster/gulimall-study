@@ -8,8 +8,11 @@ import com.atguigu.gulimall.product.service.CategoryService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -31,6 +34,26 @@ class GulimallProductApplicationTests {
 
     @Autowired
     private AttrAttrgroupRelationDao relationDao;
+
+    @Autowired
+    StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    RedissonClient redissonClient;
+
+    @Test
+    void testRedisson() {
+        System.out.println(redissonClient);
+    }
+
+    @Test
+    void testRedis() {
+        ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
+        ops.set("hello", "world1111");
+
+        String hello = ops.get("hello");
+        System.out.println("hello = " + hello);
+    }
 
     @Test
     void testEmptyCollection() {
