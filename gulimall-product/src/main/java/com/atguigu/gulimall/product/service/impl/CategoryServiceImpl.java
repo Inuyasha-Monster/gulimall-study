@@ -11,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -82,6 +84,21 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         return paths.toArray(new Long[0]);
     }
 
+    // @Caching 可以组合多个缓存操作,例如:下方可以失效两个缓存
+//    @Caching(evict={
+//       @CacheEvict(value = {"category"},key = "'level1Categorys'"),
+//       @CacheEvict(value = {"category"},key = "'getCatelogJson'")
+//    })
+
+    /**
+     * （1）更新分类数据
+     * （2）采用失效模式更新缓存
+     * （3）可以有两种方式来实现同时更新缓存到redis的一级或三级分类数据
+     *
+     * @param category
+     */
+    @CacheEvict(value = {"category"}, allEntries = true)
+//    @CachePut // 双写模式
     @Transactional(rollbackFor = {Throwable.class})
     @Override
     public void updateCascade(CategoryEntity category) {
@@ -89,10 +106,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         if (StringUtils.isNotBlank(category.getName())) {
             relationService.updateCategory(category.getCatId(), category.getName());
         }
+
+        // todo:同时删除缓存的中的关联数据
     }
 
     //    @Cacheable(value = {"category"}, key = "'level1Categorys'")
-    @Cacheable(value = {"category"}, key = "#root.method.name")
+    @Cacheable(value = {"category"}, key = "#root.method.name", sync = true)
     @Override
     public List<CategoryEntity> getLevel1Categories() {
         log.info("查询一级分类数据");
@@ -101,6 +120,16 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         return categoryEntities;
     }
 
+    /**
+     * （1）根据一级分类，找到对应的二级分类
+     * （2）将得到的二级分类，封装到Catelog2Vo中
+     * （3）根据二级分类，得到对应的三级分类
+     * （3）将三级分类封装到Catalog3List
+     * (4) 将执行结果放入到缓存中
+     *
+     * @return
+     */
+    @Cacheable(value = {"category"}, key = "#root.methodName", sync = true)
     @Override
     public Map<String, List<Catelog2Vo>> getCatelogJson() {
 
@@ -164,8 +193,19 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
      * 所以在获取锁之后的逻辑,需要先检查缓存中是否已经存在数据,因为存在可能其他获取了分布式锁的实例逻辑已经将数据放入到缓存当中
      * <p>
      * 后面我们直接使用现成的 spring cache for redis 来是实现上面的复杂逻辑
+     * Spring Cache 中的不足:
+     * 读取模式:
+     * 1.缓存穿透:查询一个null数据...解决:缓存空数据 cache-null-values=true
+     * 2.缓存击穿:大量的并发请求同时查询一个正好过期的数据...解决:???
      *
      * @return
+     * @Cacheable注解中的 sync 配置可以解决[击穿]问题,通过本地的synchronized锁解决
+     * 3.缓存雪崩:大量的key同时过期...解决:加随机时间...其实加上过期时间就行
+     * <p>
+     * 写模式:(缓存与数据库一致)
+     * 1.读写加锁(读多写少)
+     * 2.引入Canal
+     * 3.读多写多,直接查询数据库
      */
     @Deprecated
     public Map<String, List<Catelog2Vo>> getCatelogJsons() {
