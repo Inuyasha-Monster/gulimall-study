@@ -11,7 +11,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * 启动类
  */
 @EnableDiscoveryClient
-@MapperScan("com.atguigu.gulimall.product.dao")
+//@MapperScan("com.atguigu.gulimall.product.dao") 重复标记
 @SpringBootApplication
 @EnableFeignClients(basePackages = "com.atguigu.gulimall.product.feign")
 public class GulimallProductApplication {
