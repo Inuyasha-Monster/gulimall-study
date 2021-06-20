@@ -167,7 +167,7 @@ public class MallSearchServiceImpl implements MallSearchService {
         //4、当前商品涉及到的所有分类信息
         //获取到分类的聚合
         List<SearchResult.CatalogVo> catalogVos = new ArrayList<>();
-        ParsedStringTerms catalogAgg = response.getAggregations().get("catalog_agg");
+        ParsedLongTerms catalogAgg = response.getAggregations().get("catalog_agg");
         for (Terms.Bucket bucket : catalogAgg.getBuckets()) {
             SearchResult.CatalogVo catalogVo = new SearchResult.CatalogVo();
             //得到分类id
