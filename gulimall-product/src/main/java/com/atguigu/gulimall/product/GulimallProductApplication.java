@@ -10,7 +10,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 /**
  * 启动类
  */
-@EnableCaching
 @EnableDiscoveryClient
 @MapperScan("com.atguigu.gulimall.product.dao")
 @SpringBootApplication

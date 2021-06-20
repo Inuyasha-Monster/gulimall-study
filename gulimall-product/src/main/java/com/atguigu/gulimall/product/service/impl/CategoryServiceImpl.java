@@ -91,7 +91,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         }
     }
 
-    @Cacheable(value = {"category"}, key = "'level1Categorys'")
+    //    @Cacheable(value = {"category"}, key = "'level1Categorys'")
+    @Cacheable(value = {"category"}, key = "#root.method.name")
     @Override
     public List<CategoryEntity> getLevel1Categories() {
         log.info("查询一级分类数据");
