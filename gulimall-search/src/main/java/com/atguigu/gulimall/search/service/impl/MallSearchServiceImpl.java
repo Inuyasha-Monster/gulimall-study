@@ -235,6 +235,7 @@ public class MallSearchServiceImpl implements MallSearchService {
             result.setNavs(collect);
         }
 
+        // todo:品牌分类
 
         return result;
     }
@@ -264,7 +265,8 @@ public class MallSearchServiceImpl implements MallSearchService {
         //1.2 bool-fiter
         //1.2.1 catelogId
         if (null != param.getCatalog3Id()) {
-            boolQueryBuilder.filter(QueryBuilders.termQuery("catalogId", param.getCatalog3Id()));
+            // 这里有坑注意要保持与es mapping中的字段名称一致啊
+            boolQueryBuilder.filter(QueryBuilders.termQuery("catelogId", param.getCatalog3Id()));
         }
 
         //1.2.2 brandId
@@ -371,9 +373,9 @@ public class MallSearchServiceImpl implements MallSearchService {
 
         //2. 按照分类信息进行聚合
         TermsAggregationBuilder catalog_agg = AggregationBuilders.terms("catalog_agg");
-        catalog_agg.field("catalogId").size(20);
+        catalog_agg.field("catelogId").size(20);
 
-        catalog_agg.subAggregation(AggregationBuilders.terms("catalog_name_agg").field("catalogName").size(1));
+        catalog_agg.subAggregation(AggregationBuilders.terms("catalog_name_agg").field("catelogName").size(1));
 
         searchSourceBuilder.aggregation(catalog_agg);
 
