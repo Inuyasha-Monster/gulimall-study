@@ -1,6 +1,11 @@
 package com.atguigu.gulimall.thirdparty;
 
 import com.aliyun.oss.OSSClient;
+import com.atguigu.gulimall.thirdparty.component.SmsComponent;
+import com.atguigu.gulimall.thirdparty.util.HttpUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
+import org.assertj.core.internal.Bytes;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -8,19 +13,70 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootTest
 class GulimallThirdPartyApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
-	@Autowired
-	OSSClient ossClient;
+    @Autowired
+    OSSClient ossClient;
 
-	@Test
-	void testUpload() throws FileNotFoundException {
+    @Autowired
+    SmsComponent smsComponent;
+
+    @Test
+    public void testSendCode() {
+        int sendCode = smsComponent.sendCode("18098922145", "123456");
+        System.out.println("sendCode status = " + sendCode);
+    }
+
+    @Test
+    public void sendSms() {
+        String host = "https://fesms.market.alicloudapi.com";
+        String path = "/sms/";
+        String method = "GET";
+        String appcode = "b14f674581e4411c990e18bdfcfc35d6";
+        Map<String, String> headers = new HashMap<String, String>();
+        //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
+        headers.put("Authorization", "APPCODE " + appcode);
+        Map<String, String> querys = new HashMap<String, String>();
+        querys.put("code", "12345678");
+        querys.put("phone", "18098922145");
+        querys.put("skin", "1");
+        querys.put("sign", "175622");
+        //JDK 1.8示例代码请在这里下载：  http://code.fegine.com/Tools.zip
+        try {
+            /**
+             * 重要提示如下:
+             * HttpUtils请从
+             * https://github.com/aliyun/api-gateway-demo-sign-java/blob/master/src/main/java/com/aliyun/api/gateway/demo/util/HttpUtils.java
+             * 或者直接下载：
+             * http://code.fegine.com/HttpUtils.zip
+             * 下载
+             *
+             * 相应的依赖请参照
+             * https://github.com/aliyun/api-gateway-demo-sign-java/blob/master/pom.xml
+             * 相关jar包（非pom）直接下载：
+             * http://code.fegine.com/aliyun-jar.zip
+             */
+            HttpResponse response = HttpUtils.doGet(host, path, method, headers, querys);
+            //System.out.println(response.toString());如不输出json, 请打开这行代码，打印调试头部状态码。
+            //状态码: 200 正常；400 URL无效；401 appCode错误； 403 次数用完； 500 API网管错误
+            //获取response的body
+            System.out.println("-------短信发送结果------");
+            System.out.println("response = " + response);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void testUpload() throws FileNotFoundException {
 
         // 填写本地文件的完整路径。如果未指定本地路径，则默认从示例程序所属项目对应本地路径中上传文件流。
         InputStream inputStream = new FileInputStream("C:\\Users\\DJLNE\\Desktop\\study.jpg");
@@ -30,7 +86,7 @@ class GulimallThirdPartyApplicationTests {
         // 关闭OSSClient。
         ossClient.shutdown();
 
-		System.out.println("上传完成...");
-	}
+        System.out.println("上传完成...");
+    }
 
 }
