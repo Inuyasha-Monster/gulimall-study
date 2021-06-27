@@ -1,0 +1,6 @@
+
+
+logging:
+  level:
+    root: warn
+    com.atguigu.gulimall.auth: debug
