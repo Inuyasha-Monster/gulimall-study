@@ -24,4 +24,7 @@ public interface MemberFeignService {
 
     @PostMapping(value = "/member/member/oauth2/login")
     R oauthLogin(@RequestBody SocialUser socialUser) throws Exception;
+
+    @PostMapping(value = "/member/member/weixin/login")
+    R weixinLogin(@RequestParam("accessTokenInfo") String accessTokenInfo);
 }

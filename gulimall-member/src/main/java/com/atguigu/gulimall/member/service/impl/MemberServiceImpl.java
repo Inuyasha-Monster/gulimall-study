@@ -7,9 +7,11 @@ import com.atguigu.gulimall.member.dao.MemberLevelDao;
 import com.atguigu.gulimall.member.entity.MemberLevelEntity;
 import com.atguigu.gulimall.member.exception.PhoneException;
 import com.atguigu.gulimall.member.exception.UsernameException;
+import com.atguigu.gulimall.member.utils.HttpClientUtils;
 import com.atguigu.gulimall.member.vo.MemberUserLoginVo;
 import com.atguigu.gulimall.member.vo.MemberUserRegisterVo;
 import com.atguigu.gulimall.member.vo.SocialUser;
+import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -187,6 +189,55 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
 
             return register;
         }
+    }
+
+    @Override
+    public MemberEntity login(String accessTokenInfo) {
+        //从accessTokenInfo中获取出来两个值 access_token 和 oppenid
+        //把accessTokenInfo字符串转换成map集合，根据map里面中的key取出相对应的value
+        Gson gson = new Gson();
+        HashMap accessMap = gson.fromJson(accessTokenInfo, HashMap.class);
+        String accessToken = (String) accessMap.get("access_token");
+        String openid = (String) accessMap.get("openid");
+
+        //3、拿到access_token 和 oppenid，再去请求微信提供固定的API，获取到扫码人的信息
+        //TODO 查询数据库当前用用户是否曾经使用过微信登录
+
+        MemberEntity memberEntity = this.baseMapper.selectOne(new QueryWrapper<MemberEntity>().eq("social_uid", openid));
+
+        if (memberEntity == null) {
+            System.out.println("新用户注册");
+            //访问微信的资源服务器，获取用户信息
+            String baseUserInfoUrl = "https://api.weixin.qq.com/sns/userinfo" +
+                    "?access_token=%s" +
+                    "&openid=%s";
+            String userInfoUrl = String.format(baseUserInfoUrl, accessToken, openid);
+            //发送请求
+            String resultUserInfo = null;
+            try {
+                resultUserInfo = HttpClientUtils.get(userInfoUrl);
+                System.out.println("resultUserInfo==========" + resultUserInfo);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            //解析json
+            HashMap userInfoMap = gson.fromJson(resultUserInfo, HashMap.class);
+            String nickName = (String) userInfoMap.get("nickname");      //昵称
+            Double sex = (Double) userInfoMap.get("sex");        //性别
+            String headimgurl = (String) userInfoMap.get("headimgurl");      //微信头像
+
+            //把扫码人的信息添加到数据库中
+            memberEntity = new MemberEntity();
+            memberEntity.setNickname(nickName);
+            memberEntity.setGender(Integer.valueOf(Double.valueOf(sex).intValue()));
+            memberEntity.setHeader(headimgurl);
+            memberEntity.setCreateTime(new Date());
+            memberEntity.setSocialUid(openid);
+            // register.setExpiresIn(socialUser.getExpires_in());
+            this.baseMapper.insert(memberEntity);
+        }
+        return memberEntity;
     }
 
 

@@ -46,5 +46,7 @@ public interface MemberService extends IService<MemberEntity> {
      * @return
      */
     MemberEntity login(SocialUser socialUser) throws Exception;
+
+    MemberEntity login(String accessTokenInfo);
 }
 
