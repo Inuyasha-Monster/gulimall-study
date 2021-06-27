@@ -7,6 +7,7 @@ import com.atguigu.gulimall.auth.feign.ThirdPartFeignService;
 import com.atguigu.gulimall.auth.vo.UserRegisterVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
@@ -20,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -74,12 +76,20 @@ public class LoginController {
                            BindingResult result,
                            RedirectAttributes attributes) {
         if (result.hasErrors()) {
-//            Map<String, String> errors = result.getFieldErrors().stream().collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
 
-            Map<String, String> errors = new HashMap<>();
-            for (FieldError fieldError : result.getFieldErrors()) {
-                errors.putIfAbsent(fieldError.getField(),fieldError.getDefaultMessage());
-            }
+            // 直接流式处理
+            Map<String, String> errors = result.getFieldErrors()
+                    .stream()
+                    .collect(Collectors.groupingBy(FieldError::getField, Collectors.mapping(FieldError::getDefaultMessage, Collectors.joining(";"))));
+
+//            Map<String, List<FieldError>> groups = result.getFieldErrors().stream()
+//                    .collect(Collectors.groupingBy(FieldError::getField));
+//
+//            Map<String, String> errors = new HashMap<>(16);
+//            for (Map.Entry<String, List<FieldError>> group : groups.entrySet()) {
+//                String msgs = group.getValue().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.joining(";"));
+//                errors.putIfAbsent(group.getKey(), msgs);
+//            }
 
             attributes.addFlashAttribute("errors", errors);
             // 校验错误直接返回页面展示
