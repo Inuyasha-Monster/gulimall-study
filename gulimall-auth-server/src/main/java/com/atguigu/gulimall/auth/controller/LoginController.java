@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import java.util.HashMap;
@@ -162,6 +163,20 @@ public class LoginController {
 
     }
 
+    @GetMapping(value = "/login.html")
+    public String loginPage(HttpSession session) {
+
+        //从session先取出来用户的信息，判断用户是否已经登录过了
+        Object attribute = session.getAttribute(AuthServerConstant.LOGIN_USER);
+        //如果用户没登录那就跳转到登录页面
+        if (attribute == null) {
+            return "login";
+        } else {
+            return "redirect:http://gulimall.com";
+        }
+
+    }
+
     @PostMapping(value = "/login")
     public String login(UserLoginVo vo, RedirectAttributes attributes, HttpSession session) {
 
@@ -171,6 +186,7 @@ public class LoginController {
         if (login.getCode() == 0) {
             MemberResponseVo data = login.getData("data", new TypeReference<MemberResponseVo>() {
             });
+            // 使用spring session redis的方式存储
             session.setAttribute(AuthServerConstant.LOGIN_USER, data);
             return "redirect:http://gulimall.com";
         } else {
@@ -180,5 +196,12 @@ public class LoginController {
             attributes.addFlashAttribute("errors", errors);
             return "redirect:http://auth.gulimall.com/login.html";
         }
+    }
+
+    @GetMapping(value = "/loguot.html")
+    public String logout(HttpServletRequest request) {
+        request.getSession().removeAttribute(AuthServerConstant.LOGIN_USER);
+        request.getSession().invalidate();
+        return "redirect:http://gulimall.com";
     }
 }
