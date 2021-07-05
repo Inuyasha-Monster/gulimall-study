@@ -50,7 +50,7 @@ public class HelloController {
 
         if (loginUser == null) {
 
-            return "redirect:" + "http://ssoserver.com:8080/login.html" + "?redirect_url=http://client1:8081/employees";
+            return "redirect:http://ssoserver.com:8080/login.html?redirect_url=http://client1:8081/employees";
         } else {
 
 
