@@ -14,7 +14,7 @@ import java.util.UUID;
 /**
  * @Description:
  * @Created: with IntelliJ IDEA.
- * @author: 夏沫止水
+ * @author: djl
  * @createTime: 2020-06-29 19:56
  **/
 
@@ -35,7 +35,7 @@ public class LoginController {
 
 
     @GetMapping("/login.html")
-    public String loginPage(@RequestParam("redirect_url") String url, Model model, @CookieValue(value = "sso_token", required = false) String sso_token) {
+    public String loginPage(@RequestParam(value = "redirect_url") String url, Model model, @CookieValue(value = "sso_token", required = false) String sso_token) {
         if (!StringUtils.isEmpty(sso_token)) {
             return "redirect:" + url + "?token=" + sso_token;
         }

@@ -1,4 +1,4 @@
-package com.atguigu.gulimall.product.config;
+package com.atguigu.gulimall.cart.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
