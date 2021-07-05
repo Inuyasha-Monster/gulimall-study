@@ -52,7 +52,7 @@ public class LoginController {
         //登录成功跳转，跳回到登录页
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
 
-            String uuid = UUID.randomUUID().toString().replace("_", "");
+            String uuid = UUID.randomUUID().toString().replace("-", "");
             redisTemplate.opsForValue().set(uuid, username);
             Cookie sso_token = new Cookie("sso_token", uuid);
 
