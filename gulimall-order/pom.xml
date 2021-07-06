@@ -20,6 +20,14 @@
     </properties>
     <dependencies>
 
+        <!-- 支付宝sdk -->
+        <!-- https://mvnrepository.com/artifact/com.alipay.sdk/alipay-sdk-java -->
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>4.9.28.ALL</version>
+        </dependency>
+
         <!-- 引入redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
