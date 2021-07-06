@@ -4,6 +4,8 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 /**
  * 使用RabbitMQ
@@ -29,6 +31,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *      6、给分布式大事务的入口标注@GlobalTransactional
  *      7、每一个远程的小事务用@Trabsactional
  */
+
+@EnableRedisHttpSession
+@EnableDiscoveryClient
 @EnableRabbit
 @MapperScan("com.atguigu.gulimall.order.dao")
 @SpringBootApplication
