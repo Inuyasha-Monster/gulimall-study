@@ -40,6 +40,8 @@ public class MyRabbitConfig {
         rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
             @Override
             public void confirm(CorrelationData correlationData, boolean ack, String cause) {
+                // 可以通过修改 message_mq 表中的发送状态位，来标记消息的成功投递，再加上定时任务的方式将
+                // 没有发送成功的消息进行补偿投递
                 System.out.println("confirm...correlationData[" + correlationData + "]==>ack:[" + ack + "]==>cause:[" + cause + "]");
             }
         });
