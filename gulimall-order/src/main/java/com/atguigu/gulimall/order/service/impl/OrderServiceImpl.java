@@ -19,7 +19,6 @@ import com.atguigu.gulimall.order.to.OrderCreateTo;
 import com.atguigu.gulimall.order.to.SpuInfoVo;
 import com.atguigu.gulimall.order.vo.*;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -195,7 +194,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     // @Transactional(isolation = Isolation.READ_COMMITTED) 设置事务的隔离级别
     // @Transactional(propagation = Propagation.REQUIRED)   设置事务的传播级别
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class) 移除seata引入MQ消息队列保证最终数据一致性的方案
     @Override
     public SubmitOrderResponseVo submitOrder(OrderSubmitVo vo) {
         confirmVoThreadLocal.set(vo);
