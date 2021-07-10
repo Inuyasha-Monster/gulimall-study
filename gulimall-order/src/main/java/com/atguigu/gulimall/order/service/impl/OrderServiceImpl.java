@@ -19,6 +19,7 @@ import com.atguigu.gulimall.order.to.OrderCreateTo;
 import com.atguigu.gulimall.order.to.SpuInfoVo;
 import com.atguigu.gulimall.order.vo.*;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -194,7 +195,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     // @Transactional(isolation = Isolation.READ_COMMITTED) 设置事务的隔离级别
     // @Transactional(propagation = Propagation.REQUIRED)   设置事务的传播级别
     @Transactional(rollbackFor = Exception.class)
-    // @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public SubmitOrderResponseVo submitOrder(OrderSubmitVo vo) {
         confirmVoThreadLocal.set(vo);
@@ -255,13 +256,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 if (r.getCode() == 0) {
                     //锁定成功
                     responseVo.setOrder(order.getOrder());
-                    // int i = 10/0;
 
-                    //TODO 订单创建成功，发送消息给MQ
-                    rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", order.getOrder());
+                    // 测试分布式事务：seata
+                    int i = 10 / 0;
 
-                    //删除购物车里的数据
-                    redisTemplate.delete(CartConstant.CART_PREFIX + memberResponseVo.getId());
+//                    //TODO 订单创建成功，发送消息给MQ
+//                    rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", order.getOrder());
+//
+//                    //删除购物车里的数据
+//                    redisTemplate.delete(CartConstant.CART_PREFIX + memberResponseVo.getId());
+
                     return responseVo;
                 } else {
                     //锁定失败

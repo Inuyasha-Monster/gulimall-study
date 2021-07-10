@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * @Description:
  * @Created: with IntelliJ IDEA.
- * @author: 杜江龙
+ * @author: djl
  * @createTime: 2020-06-27 09:33
  **/
 public class HttpUtils {

@@ -3,7 +3,7 @@ package com.atguigu.common.constant;
 /**
  * @Description: 购物车常量
  * @Created: with IntelliJ IDEA.
- * @author: 杜江龙
+ * @author: djl
  * @createTime: 2020-06-30 17:39
  **/
 public class CartConstant {

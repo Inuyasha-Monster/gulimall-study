@@ -91,6 +91,11 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         this.baseMapper.insert(spuInfoEntity);
     }
 
+    /**
+     * todo:逻辑中包含远程调用，可以使用seata AT 模式来做后台服务的分布式事务的数据一致性
+     * @param spuSaveVo
+     */
+//    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     @Transactional(rollbackFor = {Exception.class})
     public void saveSpuInfo(SpuSaveVo spuSaveVo) {
