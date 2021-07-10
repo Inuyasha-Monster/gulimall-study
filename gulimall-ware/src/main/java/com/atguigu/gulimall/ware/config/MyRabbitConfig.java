@@ -63,10 +63,10 @@ public class MyRabbitConfig {
      *
      * @param message
      */
-    @RabbitListener(queues = "stock.release.stock.queue")
-    public void handle(Message message) {
-
-    }
+//    @RabbitListener(queues = "stock.release.stock.queue")
+//    public void handle(Message message) {
+//
+//    }
 
     /**
      * 库存服务默认的交换机
