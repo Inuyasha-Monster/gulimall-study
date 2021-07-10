@@ -5,6 +5,7 @@ import com.atguigu.gulimall.order.service.OrderService;
 import com.atguigu.gulimall.order.vo.OrderConfirmVo;
 import com.atguigu.gulimall.order.vo.OrderSubmitVo;
 import com.atguigu.gulimall.order.vo.SubmitOrderResponseVo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,6 +21,7 @@ import java.util.concurrent.ExecutionException;
  * @create 2021/7/6 22:23
  */
 
+@Slf4j
 @Controller
 public class OrderWebController {
 
@@ -81,6 +83,7 @@ public class OrderWebController {
                 return "redirect:http://order.gulimall.com/toTrade";
             }
         } catch (Exception e) {
+            log.error("提交订单未知异常", e);
             if (e instanceof NoStockException) {
                 String message = ((NoStockException) e).getMessage();
                 attributes.addFlashAttribute("msg", message);

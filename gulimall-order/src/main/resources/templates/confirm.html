@@ -671,7 +671,7 @@
             <img th:src="${item.image}" class="yun"/>
             <div class="mi">
                 <p>[[${item.title}]]<span style="color: red;" th:text="'￥' + ${#numbers.formatDecimal(item.price,3,2)}"> ￥ 499.00</span>
-                    <span> [[${item.count}]] </span> <span> [[${confirmOrderData.stocks[item.skuId]?"有货":"无货"}]]</span>
+                    <span> X[[${item.count}]] </span> <span style="color: crimson;font-size: 15px;"> [[${confirmOrderData.stocks[item.skuId]?"有货":"无货"}]]</span>
                 </p>
                 <p><span>[[${item.weight}]]kg</span></p>
                 <p class="tui-1"><img src="/static/order/confirm/img/i_07.png"/>支持7天无理由退货</p>
@@ -711,7 +711,7 @@
 <div class="xia">
     <div class="qian">
         <p class="qian_y">
-            <span>[[${confirmOrderData.count}]]</span>
+            <span>总 [[${confirmOrderData.count}]]</span>
             <span>件商品，总商品金额：</span>
             <span class="rmb">￥[[${#numbers.formatDecimal(confirmOrderData.total, 1, 2)}]]</span>
         </p>

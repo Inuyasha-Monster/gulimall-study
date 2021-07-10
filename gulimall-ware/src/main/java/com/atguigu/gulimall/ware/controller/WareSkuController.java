@@ -9,6 +9,7 @@ import com.atguigu.common.exception.BizCodeEnum;
 import com.atguigu.common.exception.NoStockException;
 import com.atguigu.common.to.SkuHasStockVo;
 import com.atguigu.gulimall.ware.vo.WareSkuLockVo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ import com.atguigu.common.utils.R;
  * @email dujianglong@gmail.com
  * @date 2021-05-29 11:41:20
  */
+@Slf4j
 @RestController
 @RequestMapping("ware/waresku")
 public class WareSkuController {
@@ -48,6 +50,7 @@ public class WareSkuController {
             boolean lockStock = wareSkuService.orderLockStock(vo);
             return R.ok().setData(lockStock);
         } catch (NoStockException e) {
+            log.error("锁定库存失败", e);
             return R.error(BizCodeEnum.NO_STOCK_EXCEPTION.getCode(), BizCodeEnum.NO_STOCK_EXCEPTION.getMsg());
         }
     }

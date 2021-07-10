@@ -17,7 +17,7 @@ public class MyRedisConfig {
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redisson() throws IOException {
         Config config = new Config();
-        config.useSingleServer().setAddress("redis://139.199.221.46:6379").setPassword("djlnet");
+        config.useSingleServer().setAddress("redis://localhost:6379").setPassword("djlnet");
         RedissonClient redisson = Redisson.create(config);
         return redisson;
     }

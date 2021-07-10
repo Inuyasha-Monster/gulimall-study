@@ -202,6 +202,7 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
 //                    lockedTo.setDetailTo(detailTo);
 //                    rabbitTemplate.convertAndSend("stock-event-exchange", "stock.locked", lockedTo);
 
+                    // 当前sku库存锁定成功，直接进行下一个sku产品的库存锁定操作
                     break;
                 } else {
                     //当前仓库锁失败，重试下一个仓库

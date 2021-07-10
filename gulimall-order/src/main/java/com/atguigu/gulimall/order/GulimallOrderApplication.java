@@ -5,6 +5,8 @@ import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 /**
@@ -30,8 +32,25 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
  *      5、启动测试分布式事务
  *      6、给分布式大事务的入口标注@GlobalTransactional
  *      7、每一个远程的小事务用@Trabsactional
+ *
+ * 当前Service方法内部调用导致事务失效的：
+ * 1、引入aop模块
+ * 2、@EnableAspectJAutoProxy 启用cglib代理 + 对外暴露对象
+ * 3、 @Transactional
+ *     public void a() {
+ *         OrderServiceImpl orderService = (OrderServiceImpl) AopContext.currentProxy();
+ *         orderService.b();
+ *         int i = 10 / 0;
+ *     }
+ *
+ *     @Transactional
+ *     public void b() {
+ *
+ *     }
  */
 
+@EnableAspectJAutoProxy(exposeProxy = true)     //开启了aspect动态代理模式,对外暴露代理对象
+@EnableFeignClients
 @EnableRedisHttpSession
 @EnableDiscoveryClient
 @EnableRabbit

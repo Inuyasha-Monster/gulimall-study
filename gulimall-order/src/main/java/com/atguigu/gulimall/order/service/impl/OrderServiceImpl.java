@@ -20,6 +20,7 @@ import com.atguigu.gulimall.order.to.SpuInfoVo;
 import com.atguigu.gulimall.order.vo.*;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -86,6 +87,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
 
+    // 模拟内部Service方法相互调用且保证事务不会失效
+
+    @Transactional
+    public void a() {
+        OrderServiceImpl orderService = (OrderServiceImpl) AopContext.currentProxy();
+        orderService.b();
+        int i = 10 / 0;
+    }
+
+    @Transactional
+    public void b() {
+
+    }
+
+    @Transactional
+    public void c() {
+
+    }
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -133,7 +152,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             List<OrderItemVo> items = confirmVo.getItems();
             //获取全部商品的id
             List<Long> skuIds = items.stream()
-                    .map((itemVo -> itemVo.getSkuId()))
+                    .map((OrderItemVo::getSkuId))
                     .collect(Collectors.toList());
 
             //远程查询商品库存信息
@@ -271,7 +290,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         order.setModifyTime(new Date());
         order.setCreateTime(new Date());
         //保存订单
-        this.baseMapper.insert(order);
+        this.save(order);
 
         //获取订单项信息
         List<OrderItemEntity> orderItems = orderCreateTo.getOrderItems();
@@ -368,6 +387,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         orderEntity.setMemberUsername(memberResponseVo.getUsername());
 
         OrderSubmitVo orderSubmitVo = confirmVoThreadLocal.get();
+        // 获取内容之后移除对象，避免内存泄露
+        confirmVoThreadLocal.remove();
 
         //远程获取收货地址和运费信息
         R fareAddressVo = wmsFeignService.getFare(orderSubmitVo.getAddrId());
