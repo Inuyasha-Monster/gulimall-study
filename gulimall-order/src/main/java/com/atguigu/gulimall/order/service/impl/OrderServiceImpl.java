@@ -7,7 +7,9 @@ import com.atguigu.common.to.OrderTo;
 import com.atguigu.common.utils.R;
 import com.atguigu.common.vo.MemberResponseVo;
 import com.atguigu.gulimall.order.constant.OrderConstant;
+import com.atguigu.gulimall.order.constant.PayConstant;
 import com.atguigu.gulimall.order.entity.OrderItemEntity;
+import com.atguigu.gulimall.order.entity.PaymentInfoEntity;
 import com.atguigu.gulimall.order.enume.OrderStatusEnum;
 import com.atguigu.gulimall.order.feign.CartFeignService;
 import com.atguigu.gulimall.order.feign.MemberFeignService;
@@ -318,6 +320,96 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 //            }
         }
     }
+
+    @Override
+    public PayVo getOrderPay(String orderSn) {
+        PayVo payVo = new PayVo();
+        OrderEntity orderInfo = this.getOrderByOrderSn(orderSn);
+
+        //保留两位小数点，向上取值
+        BigDecimal payAmount = orderInfo.getPayAmount().setScale(2, BigDecimal.ROUND_UP);
+        payVo.setTotal_amount(payAmount.toString());
+        payVo.setOut_trade_no(orderInfo.getOrderSn());
+
+        //查询订单项的数据
+        List<OrderItemEntity> orderItemInfo = orderItemService.list(
+                new QueryWrapper<OrderItemEntity>().eq("order_sn", orderSn));
+        OrderItemEntity orderItemEntity = orderItemInfo.get(0);
+        payVo.setBody(orderItemEntity.getSkuAttrsVals());
+
+        payVo.setSubject(orderItemEntity.getSkuName());
+
+        return payVo;
+    }
+
+    @Override
+    public PageUtils queryPageWithItem(Map<String, Object> params) {
+        MemberResponseVo memberResponseVo = LoginUserInterceptor.loginUser.get();
+
+        IPage<OrderEntity> page = this.page(
+                new Query<OrderEntity>().getPage(params),
+                new QueryWrapper<OrderEntity>()
+                        .eq("member_id", memberResponseVo.getId()).orderByDesc("create_time")
+        );
+
+        //遍历所有订单集合
+        List<OrderEntity> orderEntityList = page.getRecords().stream().map(order -> {
+            //根据订单号查询订单项里的数据
+            List<OrderItemEntity> orderItemEntities = orderItemService.list(new QueryWrapper<OrderItemEntity>()
+                    .eq("order_sn", order.getOrderSn()));
+            order.setOrderItemEntityList(orderItemEntities);
+            return order;
+        }).collect(Collectors.toList());
+
+        page.setRecords(orderEntityList);
+
+        return new PageUtils(page);
+    }
+
+    /**
+     * 处理支付宝回调
+     *
+     * @param asyncVo
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public String handlePayResult(PayAsyncVo asyncVo) {
+        //保存交易流水信息
+        PaymentInfoEntity paymentInfo = new PaymentInfoEntity();
+        paymentInfo.setOrderSn(asyncVo.getOut_trade_no());
+        paymentInfo.setAlipayTradeNo(asyncVo.getTrade_no());
+        paymentInfo.setTotalAmount(new BigDecimal(asyncVo.getBuyer_pay_amount()));
+        paymentInfo.setSubject(asyncVo.getBody());
+        paymentInfo.setPaymentStatus(asyncVo.getTrade_status());
+        paymentInfo.setCreateTime(new Date());
+        paymentInfo.setCallbackTime(asyncVo.getNotify_time());
+        //添加到数据库中
+        this.paymentInfoService.save(paymentInfo);
+
+        //修改订单状态
+        //获取当前状态
+        String tradeStatus = asyncVo.getTrade_status();
+
+        if (tradeStatus.equals("TRADE_SUCCESS") || tradeStatus.equals("TRADE_FINISHED")) {
+            //支付成功状态
+            String orderSn = asyncVo.getOut_trade_no(); //获取订单号
+            this.updateOrderStatus(orderSn, OrderStatusEnum.PAYED.getCode(), PayConstant.ALIPAY);
+        }
+
+        return "success";
+    }
+
+    /**
+     * 修改订单状态
+     *
+     * @param orderSn
+     * @param code
+     */
+    private void updateOrderStatus(String orderSn, Integer code, Integer payType) {
+        this.baseMapper.updateOrderStatus(orderSn, code, payType);
+    }
+
 
     /**
      * 保存订单所有数据

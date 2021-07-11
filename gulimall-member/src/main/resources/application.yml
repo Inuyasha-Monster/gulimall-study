@@ -10,6 +10,12 @@ spring:
         server-addr: localhost:8848
   application:
     name: gulimall-member
+  redis:
+    host: localhost
+    password: djlnet
+    port: 6379
+  session:
+    store-type: redis
 
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml

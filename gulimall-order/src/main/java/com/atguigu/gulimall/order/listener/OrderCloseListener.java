@@ -30,6 +30,7 @@ public class OrderCloseListener {
         System.out.println("收到过期的订单信息，准备关闭订单" + orderEntity.getOrderSn());
         try {
             orderService.closeOrder(orderEntity);
+            // todo:手动调用收单方法，让用户不能支付关闭的订单
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
             channel.basicReject(message.getMessageProperties().getDeliveryTag(), true);
