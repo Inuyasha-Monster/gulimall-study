@@ -264,6 +264,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                     //TODO 订单创建成功，发送消息给MQ
                     rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", order.getOrder());
 
+                    //                    int i = 10 / 0;
+
                     //删除购物车里的数据
                     redisTemplate.delete(CartConstant.CART_PREFIX + memberResponseVo.getId());
 
@@ -296,7 +298,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         OrderEntity orderInfo = this.getOne(new QueryWrapper<OrderEntity>().
                 eq("order_sn", orderEntity.getOrderSn()));
 
-        if (orderInfo.getStatus().equals(OrderStatusEnum.CREATE_NEW.getCode())) {
+        if (orderInfo != null && orderInfo.getStatus().equals(OrderStatusEnum.CREATE_NEW.getCode())) {
             //代付款状态进行关单
             OrderEntity orderUpdate = new OrderEntity();
             orderUpdate.setId(orderInfo.getId());

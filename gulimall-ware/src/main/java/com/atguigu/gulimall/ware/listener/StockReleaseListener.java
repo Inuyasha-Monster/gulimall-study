@@ -70,12 +70,15 @@ public class StockReleaseListener {
 
         log.info("******收到订单关闭-准备解锁库存的信息******");
 
+        // 消费者需要进行可靠的消息消费，进行ack机制的运用
         try {
             wareSkuService.unlockStock(orderTo);
             // 手动删除消息
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
             // 解锁失败 将消息重新放回队列，让别人消费
+
+            // 如果这行代码出现了问题，你觉的此条消息会回到MQ Broker里面吗?回答：会的
             channel.basicReject(message.getMessageProperties().getDeliveryTag(), true);
         }
     }
