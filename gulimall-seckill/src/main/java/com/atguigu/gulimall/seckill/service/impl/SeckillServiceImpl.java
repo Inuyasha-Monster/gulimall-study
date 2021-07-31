@@ -84,12 +84,14 @@ public class SeckillServiceImpl implements SeckillService {
             //上架商品
             List<SeckillSessionWithSkusVo> sessionData = lates3DaySession.getData("data", new TypeReference<List<SeckillSessionWithSkusVo>>() {
             });
-            //缓存到Redis
-            //1、缓存活动信息
-            saveSessionInfos(sessionData);
+            if (!CollectionUtils.isEmpty(sessionData)) {
+                //缓存到Redis
+                //1、缓存活动信息
+                saveSessionInfos(sessionData);
 
-            //2、缓存活动的关联商品信息
-            saveSessionSkuInfo(sessionData);
+                //2、缓存活动的关联商品信息
+                saveSessionSkuInfo(sessionData);
+            }
         }
 
     }
@@ -262,7 +264,7 @@ public class SeckillServiceImpl implements SeckillService {
                     SeckillSkuRedisTo redisTo = JSON.parseObject(redisValue, SeckillSkuRedisTo.class);
 
                     //随机码
-                    Long currentTime = System.currentTimeMillis();
+                    long currentTime = System.currentTimeMillis();
                     Long startTime = redisTo.getStartTime();
                     Long endTime = redisTo.getEndTime();
                     //如果当前时间大于等于秒杀活动开始时间并且要小于活动结束时间
@@ -352,7 +354,7 @@ public class SeckillServiceImpl implements SeckillService {
             }
         }
         long s3 = System.currentTimeMillis();
-        log.info("耗时..." + (s3 - s1));
+        log.info("耗时..." + (s3 - s1) + " ms");
         return null;
     }
 
