@@ -282,7 +282,10 @@ public class SeckillServiceImpl implements SeckillService {
 
     /**
      * 当前商品进行秒杀（秒杀开始）
-     *
+     * todo:
+     * 1、上架商品的信息在redis当中需要设置过期时间
+     * 2、秒杀订单超时未支付同样需要解锁库存（redis的分布式信号量）
+     * 3、秒杀活动结束需要还原剩余的信号量到实际商品的库存系统中
      * @param killId
      * @param key
      * @param num
@@ -319,13 +322,13 @@ public class SeckillServiceImpl implements SeckillService {
                 //获取信号量
                 String seckillCount = redisTemplate.opsForValue().get(SKU_STOCK_SEMAPHORE + randomCode);
                 Integer count = Integer.valueOf(seckillCount);
-                //判断信号量是否大于0,并且买的数量不能超过库存
-                if (count > 0 && num <= seckillLimit && count > num) {
+                //判断信号量是否大于0,并且购买数量不能大于限购数量,并且买的数量不能超过剩余库存
+                if (count > 0 && num <= seckillLimit && count >= num) {
                     //4、验证这个人是否已经买过了（幂等性处理）,如果秒杀成功，就去占位。userId-sessionId-skuId
                     //SETNX 原子性处理
                     String redisKey = user.getId() + "-" + skuId;
                     //设置自动过期(活动结束时间-当前时间)
-                    Long ttl = endTime - currentTime;
+                    long ttl = endTime - currentTime;
                     Boolean aBoolean = redisTemplate.opsForValue().setIfAbsent(redisKey, num.toString(), ttl, TimeUnit.MILLISECONDS);
                     if (aBoolean) {
                         //占位成功说明从来没有买过,分布式锁(获取信号量-1)
