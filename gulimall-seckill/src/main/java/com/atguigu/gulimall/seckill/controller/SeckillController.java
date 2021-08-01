@@ -1,8 +1,14 @@
 package com.atguigu.gulimall.seckill.controller;
 
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.atguigu.common.exception.BizCodeEnum;
 import com.atguigu.common.utils.R;
 import com.atguigu.gulimall.seckill.service.SeckillService;
 import com.atguigu.gulimall.seckill.to.SeckillSkuRedisTo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,6 +26,7 @@ import java.util.List;
  * @createTime: 2020-07-10 11:01
  **/
 
+@Slf4j
 @Controller
 public class SeckillController {
 
@@ -84,4 +91,49 @@ public class SeckillController {
         return "success";
     }
 
+    /**
+     * 使用自定义资源来实现灵活的流控控制
+     *
+     * @return
+     */
+    @GetMapping(value = "/testSphUEntry")
+    @ResponseBody
+    public R testSphUEntry() {
+        try (Entry entry = SphU.entry("custom")) {
+            log.debug("testSphUEntry --> custom...");
+        } catch (BlockException e) {
+            e.printStackTrace();
+            R error = R.error(BizCodeEnum.TO_MANY_REQUEST.getCode(), BizCodeEnum.TO_MANY_REQUEST.getMsg());
+            return error;
+        }
+        return R.ok();
+    }
+
+    @GetMapping(value = "/testSphUEntry2")
+    @ResponseBody
+    public R testSphUEntry2() {
+        customMethod();
+        return R.ok();
+    }
+
+    /**
+     * 使用注解的方式
+     * blockHandler: 当被标注的方法发生限流熔断降级的时候调用
+     * fallback: 针对所有的异常发生的时候
+     */
+    @SentinelResource(value = "customMethodSource", blockHandler = "blockHandler", fallback = "fallback")
+    private void customMethod() {
+        log.debug("testSphUEntry2 --> customMethodSource...");
+    }
+
+    /**
+     * 最新版本支持 private 修饰符
+     */
+    public void blockHandler() {
+        log.debug("testSphUEntry2 --> blockHandler method...");
+    }
+
+    public void fallback() {
+        log.debug("testSphUEntry2 --> fallback method...");
+    }
 }
