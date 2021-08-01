@@ -1,4 +1,4 @@
-package com.atguigu.gulimall.getaway;
+package com.atguigu.gulimall.getaway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
