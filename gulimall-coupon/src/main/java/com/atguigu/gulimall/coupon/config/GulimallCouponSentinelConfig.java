@@ -1,11 +1,9 @@
-package com.atguigu.gulimall.member.config;
-
+package com.atguigu.gulimall.coupon.config;
 
 import com.alibaba.csp.sentinel.adapter.servlet.callback.UrlBlockHandler;
 import com.alibaba.csp.sentinel.adapter.servlet.callback.WebCallbackManager;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.fastjson.JSON;
-
 import com.atguigu.common.exception.BizCodeEnum;
 import com.atguigu.common.utils.R;
 import org.springframework.context.annotation.Configuration;
@@ -22,10 +20,13 @@ import java.io.IOException;
  **/
 
 @Configuration
-public class GulimallMemberSentinelConfig {
+public class GulimallCouponSentinelConfig {
 
-    public GulimallMemberSentinelConfig() {
+    public GulimallCouponSentinelConfig() {
 
+        /**
+         * 配置熔断自定义错误内容
+         */
         WebCallbackManager.setUrlBlockHandler(new UrlBlockHandler() {
             @Override
             public void blocked(HttpServletRequest request, HttpServletResponse response, BlockException ex) throws IOException {
@@ -33,7 +34,6 @@ public class GulimallMemberSentinelConfig {
                 response.setCharacterEncoding("UTF-8");
                 response.setContentType("application/json");
                 response.getWriter().write(JSON.toJSONString(error));
-
             }
         });
 
