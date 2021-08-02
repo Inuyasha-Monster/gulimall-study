@@ -8,15 +8,19 @@ import java.util.Map;
 import com.atguigu.common.exception.BizCodeEnum;
 import com.atguigu.common.exception.NoStockException;
 import com.atguigu.common.to.SkuHasStockVo;
+import com.atguigu.gulimall.ware.vo.LockSeckillStockVo;
 import com.atguigu.gulimall.ware.vo.WareSkuLockVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.atguigu.gulimall.ware.entity.WareSkuEntity;
 import com.atguigu.gulimall.ware.service.WareSkuService;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.common.utils.R;
+
+import javax.validation.Valid;
 
 
 /**
@@ -65,6 +69,32 @@ public class WareSkuController {
     public R getSkuHasStock(@RequestBody List<Long> skuIds) {
         List<SkuHasStockVo> skuHasStockVos = wareSkuService.getSkuHasStock(skuIds);
         return R.ok().setData(skuHasStockVos);
+    }
+
+    /**
+     * 获取当前SkuId剩余可销售数量
+     *
+     * @param skuId
+     * @return
+     */
+    @GetMapping("/remaindStock/{skuId}")
+    @ResponseBody
+    public R getRemaindStock(@PathVariable(value = "skuId") Long skuId) {
+        Long remaindStock = wareSkuService.getRemaindStock(skuId);
+        return R.ok().setData(remaindStock);
+    }
+
+    /**
+     * 按照skuId+数量锁定库存
+     *
+     * @param lockSeckillStockVo
+     * @return
+     */
+    @PostMapping("/lockSeckillStock")
+    @ResponseBody
+    public R lockSeckillStock(@RequestBody @Validated LockSeckillStockVo lockSeckillStockVo) {
+        wareSkuService.lockSeckillStock(lockSeckillStockVo.getSkuId(), lockSeckillStockVo.getLockCount());
+        return R.ok();
     }
 
     /**

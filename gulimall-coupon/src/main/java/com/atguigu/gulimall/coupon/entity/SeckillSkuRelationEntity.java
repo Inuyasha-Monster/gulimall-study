@@ -8,6 +8,8 @@ import java.io.Serializable;
 import java.util.Date;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * 秒杀活动商品关联
  * 
@@ -32,22 +34,27 @@ public class SeckillSkuRelationEntity implements Serializable {
 	/**
 	 * 活动场次id
 	 */
+	@NotNull
 	private Long promotionSessionId;
 	/**
 	 * 商品id
 	 */
+	@NotNull
 	private Long skuId;
 	/**
 	 * 秒杀价格
 	 */
+	@NotNull
 	private BigDecimal seckillPrice;
 	/**
 	 * 秒杀总量
 	 */
+	@NotNull
 	private BigDecimal seckillCount;
 	/**
 	 * 每人限购数量
 	 */
+	@NotNull
 	private BigDecimal seckillLimit;
 	/**
 	 * 排序

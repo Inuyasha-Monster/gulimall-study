@@ -34,8 +34,17 @@
           AND ware_id = #{wareId}
     </update>
 
+    <update id="lockSeckillSkuStock">
+        UPDATE wms_ware_sku
+        SET stock_locked = stock_locked + #{seckillCount}
+        WHERE
+            sku_id = #{skuId}
+          AND ware_id = #{wareId}
+          AND stock - stock_locked >= #{seckillCount}
+    </update>
+
     <select id="getSkuStock" resultType="java.lang.Long">
-        SELECT SUM(stock - stock_locked) FROM wms_ware_sku where sku_id =#{item};
+        SELECT COALESCE(SUM(stock - stock_locked),0) FROM wms_ware_sku where sku_id =#{item};
     </select>
 
     <select id="listWareIdHasSkuStock" resultType="java.lang.Long">
@@ -46,6 +55,17 @@
         WHERE
             sku_id = #{skuId}
           AND stock - stock_locked > 0
+        order by stock - stock_locked desc
+    </select>
+
+    <select id="listWareIdSeckillSkuStock" resultType="java.lang.Long">
+        SELECT
+            ware_id
+        FROM
+            wms_ware_sku
+        WHERE
+            sku_id = #{skuId}
+          AND stock - stock_locked >= #{lockCount}
     </select>
 
 

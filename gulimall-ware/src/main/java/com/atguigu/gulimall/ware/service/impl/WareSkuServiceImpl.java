@@ -26,12 +26,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -295,6 +295,38 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
                     taskDetailEntity.getId());
         }
 
+    }
+
+    @Override
+    public Long getRemaindStock(Long skuId) {
+        return wareSkuDao.getSkuStock(skuId);
+    }
+
+    /**
+     * 锁定秒杀所需库存
+     *
+     * @param skuId
+     * @param lockCount
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void lockSeckillStock(Integer skuId, Integer lockCount) {
+        List<Long> wareIds = wareSkuDao.listWareIdSeckillSkuStock(skuId, lockCount);
+        if (CollectionUtils.isEmpty(wareIds)) {
+            throw new RuntimeException("秒杀锁定库存失败,当前仓库缺货:" + skuId);
+        }
+        boolean ok = false;
+        for (Long wareId : wareIds) {
+            // 任意一个锁定ok则退出
+            final Long num = wareSkuDao.lockSeckillSkuStock(skuId.longValue(), wareId, lockCount);
+            if (num > 0) {
+                ok = true;
+                break;
+            }
+        }
+        if (!ok) {
+            throw new RuntimeException("秒杀锁定库存失败,当前仓库缺货:" + skuId);
+        }
     }
 
     /**

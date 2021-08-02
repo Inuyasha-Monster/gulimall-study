@@ -33,5 +33,9 @@ public interface WareSkuService extends IService<WareSkuEntity> {
     void unlockStock(StockLockedTo to);
 
     void unlockStock(OrderTo orderTo);
+
+    Long getRemaindStock(Long skuId);
+
+    void lockSeckillStock(Integer skuId, Integer lockCount);
 }
 
