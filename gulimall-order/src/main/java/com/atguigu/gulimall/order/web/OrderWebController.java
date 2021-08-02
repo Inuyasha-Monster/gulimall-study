@@ -1,5 +1,6 @@
 package com.atguigu.gulimall.order.web;
 
+import com.atguigu.common.exception.NoSelectAnyCartItemException;
 import com.atguigu.common.exception.NoStockException;
 import com.atguigu.gulimall.order.service.OrderService;
 import com.atguigu.gulimall.order.vo.OrderConfirmVo;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -41,6 +43,11 @@ public class OrderWebController {
     public String toTrade(Model model, HttpServletRequest request) throws ExecutionException, InterruptedException {
 
         OrderConfirmVo confirmVo = orderService.confirmOrder();
+
+        if (CollectionUtils.isEmpty(confirmVo.getItems())) {
+            // 引导用户去购物
+            model.addAttribute("msg", "请选择商品加入购物车之后下单");
+        }
 
         model.addAttribute("confirmOrderData", confirmVo);
         //展示订单确认的数据
@@ -83,10 +90,14 @@ public class OrderWebController {
                 return "redirect:http://order.gulimall.com/toTrade";
             }
         } catch (Exception e) {
-            log.error("提交订单未知异常", e);
             if (e instanceof NoStockException) {
-                String message = ((NoStockException) e).getMessage();
+                String message = e.getMessage();
                 attributes.addFlashAttribute("msg", message);
+            } else if (e instanceof NoSelectAnyCartItemException) {
+                String message = e.getMessage();
+                attributes.addFlashAttribute("msg", message);
+            } else {
+                log.error("提交订单未知异常", e);
             }
             return "redirect:http://order.gulimall.com/toTrade";
         }

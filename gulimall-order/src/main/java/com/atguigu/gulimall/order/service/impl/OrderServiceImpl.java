@@ -2,6 +2,7 @@ package com.atguigu.gulimall.order.service.impl;
 
 import com.alibaba.fastjson.TypeReference;
 import com.atguigu.common.constant.CartConstant;
+import com.atguigu.common.exception.NoSelectAnyCartItemException;
 import com.atguigu.common.exception.NoStockException;
 import com.atguigu.common.to.OrderTo;
 import com.atguigu.common.to.mq.SeckillOrderTo;
@@ -49,6 +50,7 @@ import com.atguigu.gulimall.order.dao.OrderDao;
 import com.atguigu.gulimall.order.entity.OrderEntity;
 import com.atguigu.gulimall.order.service.OrderService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -129,7 +131,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //获取当前用户登录的信息
         MemberResponseVo memberResponseVo = LoginUserInterceptor.loginUser.get();
 
-        //TODO :获取当前线程请求头信息(解决Feign异步调用丢失请求头问题)
+        // 获取当前线程请求头信息(解决Feign异步调用丢失请求头问题)
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
 
         //开启第一个异步任务
@@ -155,6 +157,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //feign在远程调用之前要构造请求，调用很多的拦截器
         }, threadPoolExecutor).thenRunAsync(() -> {
             List<OrderItemVo> items = confirmVo.getItems();
+            if (CollectionUtils.isEmpty(items)) {
+                return;
+            }
             //获取全部商品的id
             List<Long> skuIds = items.stream()
                     .map((OrderItemVo::getSkuId))
@@ -178,8 +183,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
         //4、价格数据自动计算
 
-        //TODO 5、防重令牌(防止表单重复提交)
-        //为用户设置一个token，三十分钟过期时间（存在redis）
+        // 5、防重令牌(防止表单重复提交)
+        //为用户设置一个token，三十分钟过期时间（存在redis且保持用户唯一,可以覆盖）
         String token = UUID.randomUUID().toString().replace("-", "");
         redisTemplate.opsForValue().set(OrderConstant.USER_ORDER_TOKEN_PREFIX + memberResponseVo.getId(), token, 30, TimeUnit.MINUTES);
         confirmVo.setOrderToken(token);
@@ -594,19 +599,22 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
      */
     private List<OrderItemEntity> builderOrderItems(String orderSn) {
 
-        List<OrderItemEntity> orderItemEntityList = new ArrayList<>();
 
         //最后确定每个购物项的价格
         List<OrderItemVo> currentCartItems = cartFeignService.getCurrentCartItems();
-        if (currentCartItems != null && currentCartItems.size() > 0) {
-            orderItemEntityList = currentCartItems.stream().map((items) -> {
-                //构建订单项数据
-                OrderItemEntity orderItemEntity = builderOrderItem(items);
-                orderItemEntity.setOrderSn(orderSn);
 
-                return orderItemEntity;
-            }).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(currentCartItems)) {
+            throw new NoSelectAnyCartItemException("请选择商品加入购物车之后下单");
         }
+
+        List<OrderItemEntity> orderItemEntityList = currentCartItems.stream().map((items) -> {
+            //构建订单项数据
+            OrderItemEntity orderItemEntity = builderOrderItem(items);
+            orderItemEntity.setOrderSn(orderSn);
+
+            return orderItemEntity;
+        }).collect(Collectors.toList());
+
 
         return orderItemEntityList;
     }

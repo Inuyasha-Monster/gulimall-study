@@ -19,12 +19,12 @@ public class OrderConfirmVo {
     @Getter
     @Setter
     /** 会员收获地址列表 **/
-            List<MemberAddressVo> memberAddressVos;
+    List<MemberAddressVo> memberAddressVos;
 
     @Getter
     @Setter
     /** 所有选中的购物项 **/
-            List<OrderItemVo> items;
+    List<OrderItemVo> items;
 
     /**
      * 发票记录

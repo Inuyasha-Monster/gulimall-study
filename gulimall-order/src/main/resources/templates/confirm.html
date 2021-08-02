@@ -667,7 +667,7 @@
             <button>换购</button>
             <span>已购满20.00元，再加49.90元，可返回购物车领取赠品</span></div>
         <!--图片-->
-        <div class="yun1" th:each="item:${confirmOrderData.items}">
+        <div th:if="${not #lists.isEmpty(confirmOrderData.items)}" class="yun1" th:each="item:${confirmOrderData.items}">
             <img th:src="${item.image}" class="yun"/>
             <div class="mi">
                 <p>[[${item.title}]]<span style="color: red;" th:text="'￥' + ${#numbers.formatDecimal(item.price,3,2)}"> ￥ 499.00</span>

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -259,31 +260,30 @@ public class CartServiceImpl implements CartService {
     @Override
     public List<CartItemVo> getUserCartItems() {
 
-        List<CartItemVo> cartItemVoList = new ArrayList<>();
+        List<CartItemVo> cartItemVoList;
         //获取当前用户登录的信息
         UserInfoTo userInfoTo = CartInterceptor.toThreadLocal.get();
-        //如果用户未登录直接返回null
+        //如果用户未登录直接返回空集合
         if (userInfoTo.getUserId() == null) {
-            return null;
-        } else {
-            //获取购物车项
-            String cartKey = CartConstant.CART_PREFIX + userInfoTo.getUserId();
-            //获取所有的
-            List<CartItemVo> cartItems = getCartItems(cartKey);
-            if (cartItems == null) {
-                throw new CartExceptionHandler();
-            }
-            //筛选出选中的
-            cartItemVoList = cartItems.stream()
-                    .filter(items -> items.getCheck())
-                    .map(item -> {
-                        //更新为最新的价格（查询数据库）
-                        BigDecimal price = productFeignService.getPrice(item.getSkuId());
-                        item.setPrice(price);
-                        return item;
-                    })
-                    .collect(Collectors.toList());
+            return Collections.emptyList();
         }
+
+        //获取购物车项
+        String cartKey = CartConstant.CART_PREFIX + userInfoTo.getUserId();
+        //获取所有的
+        List<CartItemVo> cartItems = getCartItems(cartKey);
+        if (cartItems == null) {
+            return Collections.emptyList();
+        }
+        //筛选出选中的
+        cartItemVoList = cartItems.stream()
+                .filter(CartItemVo::getCheck)
+                .peek(item -> {
+                    //更新为最新的价格（查询数据库）
+                    BigDecimal price = productFeignService.getPrice(item.getSkuId());
+                    item.setPrice(price);
+                })
+                .collect(Collectors.toList());
 
         return cartItemVoList;
     }
