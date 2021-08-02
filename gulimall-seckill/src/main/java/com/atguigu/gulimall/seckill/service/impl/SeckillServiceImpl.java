@@ -73,7 +73,7 @@ public class SeckillServiceImpl implements SeckillService {
     /**
      * 秒杀商品分布式信号量
      */
-    private final String SKU_STOCK_SEMAPHORE = "seckill:stock:";    //+商品随机码
+    private final String SKU_STOCK_SEMAPHORE = "seckill:stock:";
 
     @Override
     public void uploadSeckillSkuLatest3Days() {
@@ -103,7 +103,7 @@ public class SeckillServiceImpl implements SeckillService {
      */
     private void saveSessionInfos(List<SeckillSessionWithSkusVo> sessions) {
 
-        sessions.stream().forEach(session -> {
+        sessions.forEach(session -> {
 
             //获取当前活动的开始和结束时间的时间戳
             long startTime = session.getStartTime().getTime();
@@ -132,14 +132,14 @@ public class SeckillServiceImpl implements SeckillService {
      */
     private void saveSessionSkuInfo(List<SeckillSessionWithSkusVo> sessions) {
 
-        sessions.stream().forEach(session -> {
+        sessions.forEach(session -> {
             //准备hash操作，绑定hash
             BoundHashOperations<String, Object, Object> operations = redisTemplate.boundHashOps(SECKILL_CACHE_PREFIX);
-            session.getRelationSkus().stream().forEach(seckillSkuVo -> {
+            session.getRelationSkus().forEach(seckillSkuVo -> {
                 //生成随机码
                 String token = UUID.randomUUID().toString().replace("-", "");
                 String redisKey = seckillSkuVo.getPromotionSessionId().toString() + "-" + seckillSkuVo.getSkuId().toString();
-                if (!operations.hasKey(redisKey)) {
+                if (Boolean.FALSE.equals(operations.hasKey(redisKey))) {
 
                     //缓存我们商品信息
                     SeckillSkuRedisTo redisTo = new SeckillSkuRedisTo();
@@ -286,6 +286,7 @@ public class SeckillServiceImpl implements SeckillService {
      * 1、上架商品的信息在redis当中需要设置过期时间
      * 2、秒杀订单超时未支付同样需要解锁库存（redis的分布式信号量）
      * 3、秒杀活动结束需要还原剩余的信号量到实际商品的库存系统中
+     *
      * @param killId
      * @param key
      * @param num
