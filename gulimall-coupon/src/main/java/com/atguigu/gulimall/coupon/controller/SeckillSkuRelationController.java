@@ -75,7 +75,7 @@ public class SeckillSkuRelationController {
         // 检查商品是否存在
         final R skuInfo = productFeignService.getInfo(seckillSkuRelation.getSkuId());
         if (skuInfo == null) {
-            return R.error("not found skuId" + seckillSkuRelation.getSkuId());
+            return R.error("not found skuId:" + seckillSkuRelation.getSkuId());
         }
 
         // 检查对应sku库存是否足够秒杀数量
@@ -84,7 +84,7 @@ public class SeckillSkuRelationController {
         });
 
         if (BigDecimal.valueOf(remaindStockData).compareTo(seckillSkuRelation.getSeckillCount()) < 0) {
-            return R.error(" is not enough stock of skuId" + seckillSkuRelation.getSkuId());
+            return R.error("not enough stock of skuId:" + seckillSkuRelation.getSkuId());
         }
 
         seckillSkuRelationService.saveSeckill(seckillSkuRelation);

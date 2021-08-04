@@ -56,7 +56,8 @@ public class SeckillSkuRelationServiceImpl extends ServiceImpl<SeckillSkuRelatio
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveSeckill(SeckillSkuRelationEntity seckillSkuRelation) {
-        this.save(seckillSkuRelation);
+
+        // 先尝试锁定库存
         final LockSeckillStockVo stockVo = new LockSeckillStockVo();
         stockVo.setSkuId(seckillSkuRelation.getSkuId().intValue());
         stockVo.setLockCount(seckillSkuRelation.getSeckillCount().intValue());
@@ -64,6 +65,10 @@ public class SeckillSkuRelationServiceImpl extends ServiceImpl<SeckillSkuRelatio
         if (result.getCode() != 0) {
             throw new RuntimeException("锁定秒杀库存失败");
         }
+
+        // 保存秒杀商品信息
+        this.save(seckillSkuRelation);
+
         // 例如:1/0 todo:如果远程调用成功但是本地事务因为意外异常(例如:远程调用超时等)导致本地事务回滚了,需要远程调用也需要回滚 该如何去做呢?
     }
 

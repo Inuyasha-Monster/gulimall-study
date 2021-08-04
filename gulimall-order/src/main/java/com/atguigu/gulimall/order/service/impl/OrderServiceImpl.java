@@ -359,12 +359,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         );
 
         //遍历所有订单集合
-        List<OrderEntity> orderEntityList = page.getRecords().stream().map(order -> {
+        List<OrderEntity> orderEntityList = page.getRecords().stream().peek(order -> {
             //根据订单号查询订单项里的数据
             List<OrderItemEntity> orderItemEntities = orderItemService.list(new QueryWrapper<OrderItemEntity>()
                     .eq("order_sn", order.getOrderSn()));
             order.setOrderItemEntityList(orderItemEntities);
-            return order;
         }).collect(Collectors.toList());
 
         page.setRecords(orderEntityList);

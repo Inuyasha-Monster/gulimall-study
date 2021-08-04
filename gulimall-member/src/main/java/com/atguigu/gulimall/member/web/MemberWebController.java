@@ -39,7 +39,6 @@ public class MemberWebController {
 
         //远程查询订单服务订单数据
         R orderInfo = orderFeignService.listWithItem(page);
-        System.out.println(JSON.toJSONString(orderInfo));
         model.addAttribute("orders", orderInfo);
 
         return "orderList";
