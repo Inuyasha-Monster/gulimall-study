@@ -11,7 +11,9 @@ import javax.validation.constraints.NotNull;
 @Data
 public class LockSeckillStockVo {
     @NotNull
-    private Integer skuId;
+    private Long skuId;
     @NotNull
     private Integer lockCount;
+    @NotNull
+    private Long relationId;
 }

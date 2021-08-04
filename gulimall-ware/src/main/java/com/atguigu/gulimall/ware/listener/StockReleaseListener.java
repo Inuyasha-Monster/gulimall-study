@@ -3,6 +3,8 @@ package com.atguigu.gulimall.ware.listener;
 import com.atguigu.common.to.OrderTo;
 import com.atguigu.common.to.mq.StockLockedTo;
 import com.atguigu.gulimall.ware.service.WareSkuService;
+import com.atguigu.gulimall.ware.vo.LockSeckillStockVo;
+import com.atguigu.gulimall.ware.vo.UnlockSeckillStockVo;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -83,5 +85,17 @@ public class StockReleaseListener {
         }
     }
 
+    @RabbitHandler
+    public void handleSeckillLockedStockCheckFailed(UnlockSeckillStockVo vo, Message message, Channel channel) throws IOException {
+        log.info("******收到检查秒杀库存-准备尝试解锁秒杀库存的信息******");
+        try {
+            wareSkuService.checkSeckillAndUnlockStock(vo);
+            // 手动删除消息
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        } catch (Exception exception) {
+            log.error("handleSeckillLockedStockCheckFailed error", exception);
+            channel.basicReject(message.getMessageProperties().getDeliveryTag(), true);
+        }
+    }
 
 }

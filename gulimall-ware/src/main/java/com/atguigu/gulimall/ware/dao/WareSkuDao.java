@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * 商品库存
- * 
+ *
  * @author dujianglong
  * @email dujianglong@gmail.com
  * @date 2021-05-29 11:41:20
@@ -21,13 +21,21 @@ public interface WareSkuDao extends BaseMapper<WareSkuEntity> {
 
     Long getSkuStock(@Param("item") Long item);
 
+    /**
+     * 获取单个仓库当前sku剩余库存的最大数量
+     *
+     * @param skuId
+     * @return
+     */
+    Long getSkuMaxStockSingleWare(@Param("skuId") Long skuId);
+
     List<Long> listWareIdHasSkuStock(@Param("skuId") Long skuId);
 
     Long lockSkuStock(@Param("skuId") Long skuId, @Param("wareId") Long wareId, @Param("num") Integer num);
 
     void unLockStock(@Param("skuId") Long skuId, @Param("wareId") Long wareId, @Param("skuNum") Integer skuNum);
 
-    List<Long> listWareIdSeckillSkuStock(@Param("skuId") Integer skuId, @Param("lockCount") Integer lockCount);
+    List<Long> listWareIdSeckillSkuStock(@Param("skuId") Long skuId, @Param("lockCount") Integer lockCount);
 
     Long lockSeckillSkuStock(@Param("skuId") long skuId, @Param("wareId") Long wareId, @Param("seckillCount") Integer seckillCount);
 }

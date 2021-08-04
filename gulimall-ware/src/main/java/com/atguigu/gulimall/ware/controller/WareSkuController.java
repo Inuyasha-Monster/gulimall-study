@@ -49,7 +49,6 @@ public class WareSkuController {
      */
     @PostMapping(value = "/lock/order")
     public R orderLockStock(@RequestBody WareSkuLockVo vo) {
-
         try {
             boolean lockStock = wareSkuService.orderLockStock(vo);
             return R.ok().setData(lockStock);
@@ -72,7 +71,7 @@ public class WareSkuController {
     }
 
     /**
-     * 获取当前SkuId剩余可销售数量
+     * 获取当前SkuId剩余可销售数量(一个仓库)
      *
      * @param skuId
      * @return
@@ -93,7 +92,7 @@ public class WareSkuController {
     @PostMapping("/lockSeckillStock")
     @ResponseBody
     public R lockSeckillStock(@RequestBody @Validated LockSeckillStockVo lockSeckillStockVo) {
-        wareSkuService.lockSeckillStock(lockSeckillStockVo.getSkuId(), lockSeckillStockVo.getLockCount());
+        wareSkuService.lockSeckillStock(lockSeckillStockVo);
         return R.ok();
     }
 

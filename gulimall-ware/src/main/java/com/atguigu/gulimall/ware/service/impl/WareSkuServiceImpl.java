@@ -13,18 +13,18 @@ import com.atguigu.gulimall.ware.dao.WareSkuDao;
 import com.atguigu.gulimall.ware.entity.WareOrderTaskDetailEntity;
 import com.atguigu.gulimall.ware.entity.WareOrderTaskEntity;
 import com.atguigu.gulimall.ware.entity.WareSkuEntity;
+import com.atguigu.gulimall.ware.feign.CouponFeignService;
 import com.atguigu.gulimall.ware.feign.OrderFeignService;
 import com.atguigu.gulimall.ware.feign.ProductFeignService;
 import com.atguigu.gulimall.ware.service.WareOrderTaskDetailService;
 import com.atguigu.gulimall.ware.service.WareOrderTaskService;
 import com.atguigu.gulimall.ware.service.WareSkuService;
-import com.atguigu.gulimall.ware.vo.OrderItemVo;
-import com.atguigu.gulimall.ware.vo.OrderVo;
-import com.atguigu.gulimall.ware.vo.WareSkuLockVo;
+import com.atguigu.gulimall.ware.vo.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 /**
  * WareSkuServiceImpl
  */
+@Slf4j
 @Service("wareSkuService")
 public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> implements WareSkuService {
 
@@ -62,6 +63,9 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
 
     @Autowired
     private OrderFeignService orderFeignService;
+
+    @Autowired
+    private CouponFeignService couponFeignService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -130,7 +134,7 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
             Long count = this.baseMapper.getSkuStock(item);
             SkuHasStockVo skuHasStockVo = new SkuHasStockVo();
             skuHasStockVo.setSkuId(item);
-            skuHasStockVo.setHasStock(count == null ? false : count > 0);
+            skuHasStockVo.setHasStock(count != null && count > 0);
             return skuHasStockVo;
         }).collect(Collectors.toList());
         return skuHasStockVos;
@@ -157,7 +161,6 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         wareOrderTaskEntity.setOrderSn(vo.getOrderSn());
         wareOrderTaskEntity.setCreateTime(new Date());
         wareOrderTaskService.save(wareOrderTaskEntity);
-
 
         //1、按照下单的收货地址，找到一个就近仓库，锁定库存
         //2、找到每个商品在哪个仓库都有库存
@@ -299,33 +302,54 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
 
     @Override
     public Long getRemaindStock(Long skuId) {
-        return wareSkuDao.getSkuStock(skuId);
+        return wareSkuDao.getSkuMaxStockSingleWare(skuId);
     }
 
     /**
      * 锁定秒杀所需库存
      *
-     * @param skuId
-     * @param lockCount
+     * @param lockSeckillStockVo
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void lockSeckillStock(Integer skuId, Integer lockCount) {
-        List<Long> wareIds = wareSkuDao.listWareIdSeckillSkuStock(skuId, lockCount);
+    public void lockSeckillStock(LockSeckillStockVo lockSeckillStockVo) {
+        List<Long> wareIds = wareSkuDao.listWareIdSeckillSkuStock(lockSeckillStockVo.getSkuId(), lockSeckillStockVo.getLockCount());
         if (CollectionUtils.isEmpty(wareIds)) {
-            throw new RuntimeException("秒杀锁定库存失败,当前仓库缺货:" + skuId);
+            throw new RuntimeException("秒杀锁定库存失败,当前仓库缺货:" + lockSeckillStockVo.getSkuId());
         }
         boolean ok = false;
+        UnlockSeckillStockVo unlockSeckillStockVo = new UnlockSeckillStockVo();
+        BeanUtils.copyProperties(lockSeckillStockVo, unlockSeckillStockVo);
         for (Long wareId : wareIds) {
-            // 任意一个锁定ok则退出
-            final Long num = wareSkuDao.lockSeckillSkuStock(skuId.longValue(), wareId, lockCount);
+            // 任意一个仓库锁定库存成功则退出
+            final Long num = wareSkuDao.lockSeckillSkuStock(lockSeckillStockVo.getSkuId(), wareId, lockSeckillStockVo.getLockCount());
             if (num > 0) {
                 ok = true;
+                unlockSeckillStockVo.setWareId(wareId);
                 break;
             }
         }
         if (!ok) {
-            throw new RuntimeException("秒杀锁定库存失败,当前仓库缺货:" + skuId);
+            throw new RuntimeException("秒杀锁定库存失败,当前仓库缺货:" + lockSeckillStockVo.getSkuId());
+        } else {
+            // 秒杀库存锁定成功但是可能调用方数据回滚了,所以需要超时自动解锁秒杀锁定的库存
+            rabbitTemplate.convertAndSend("stock-event-exchange", "stock.locked.seckill", unlockSeckillStockVo);
+        }
+    }
+
+    @Override
+    public void checkSeckillAndUnlockStock(UnlockSeckillStockVo vo) {
+        final R result = couponFeignService.info(vo.getRelationId());
+        if (result.getCode() == 0) {
+            final SeckillSkuRelationVo data = result.getData("seckillSkuRelation", new TypeReference<SeckillSkuRelationVo>() {
+            });
+            if (data == null) {
+                // 表示秒杀商品创建失败,需要回滚秒杀库存
+                wareSkuDao.unLockStock(vo.getSkuId(), vo.getWareId(), vo.getLockCount());
+                log.info("秒杀商品创建失败,回滚秒杀库存成功");
+            } else {
+                log.info("秒杀商品添加成功,无需解锁");
+            }
         }
     }
 

@@ -68,5 +68,14 @@
           AND stock - stock_locked >= #{lockCount}
     </select>
 
+    <select id="getSkuMaxStockSingleWare" resultType="java.lang.Long">
+        SELECT COALESCE(SUM(stock - stock_locked), 0)
+        FROM wms_ware_sku
+        where sku_id = #{skuId}
+        group by ware_id
+        order by COALESCE(SUM(stock - stock_locked), 0) desc
+        limit 1
+    </select>
+
 
 </mapper>

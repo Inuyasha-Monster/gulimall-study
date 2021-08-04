@@ -1,4 +1,4 @@
-package com.atguigu.gulimall.coupon.vo;
+package com.atguigu.gulimall.ware.vo;
 
 import lombok.Data;
 
@@ -9,11 +9,9 @@ import javax.validation.constraints.NotNull;
  * @create 2021/8/2 22:03
  */
 @Data
-public class LockSeckillStockVo {
-    @NotNull
-    private Integer skuId;
-    @NotNull
+public class UnlockSeckillStockVo {
+    private Long skuId;
     private Integer lockCount;
-    @NotNull
     private Long relationId;
+    private Long wareId;
 }

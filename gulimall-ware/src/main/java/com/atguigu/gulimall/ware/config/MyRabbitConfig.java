@@ -149,4 +149,30 @@ public class MyRabbitConfig {
     }
 
 
+    /**
+     * 延迟队列
+     *
+     * @return
+     */
+    @Bean
+    public Queue stockDelaySeckill() {
+
+        HashMap<String, Object> arguments = new HashMap<>();
+        arguments.put("x-dead-letter-exchange", "stock-event-exchange");
+        arguments.put("x-dead-letter-routing-key", "stock.release");
+        // 保证秒杀活动添加商品异常的时候,秒杀库存需要超时自动解锁
+        arguments.put("x-message-ttl", 10000);
+
+        Queue queue = new Queue("stock.delay.seckill.queue", true, false, false, arguments);
+        return queue;
+    }
+
+    @Bean
+    public Binding stockLockedSeckillBinding() {
+        return new Binding("stock.delay.seckill.queue",
+                Binding.DestinationType.QUEUE,
+                "stock-event-exchange",
+                "stock.locked.seckill",
+                null);
+    }
 }

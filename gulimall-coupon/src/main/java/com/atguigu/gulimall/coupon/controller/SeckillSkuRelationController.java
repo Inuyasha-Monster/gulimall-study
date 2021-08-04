@@ -84,7 +84,7 @@ public class SeckillSkuRelationController {
         });
 
         if (BigDecimal.valueOf(remaindStockData).compareTo(seckillSkuRelation.getSeckillCount()) < 0) {
-            return R.error("not enough stock of skuId:" + seckillSkuRelation.getSkuId());
+            return R.error("not enough stock of skuId:" + seckillSkuRelation.getSkuId() +" to seckill");
         }
 
         seckillSkuRelationService.saveSeckill(seckillSkuRelation);
