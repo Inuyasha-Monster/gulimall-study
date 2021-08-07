@@ -1,6 +1,10 @@
 package com.atguigu.gulimall.seckill.controller;
 
 import com.atguigu.common.utils.R;
+import org.redisson.RedissonDelayedQueue;
+import org.redisson.api.RDelayedQueue;
+import org.redisson.api.RQueue;
+import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,10 +20,14 @@ import java.util.concurrent.ThreadLocalRandom;
 @RestController
 @RequestMapping("/test")
 public class TestController {
-    private final RabbitTemplate rabbitTemplate;
 
-    public TestController(RabbitTemplate rabbitTemplate) {
+    private final RabbitTemplate rabbitTemplate;
+    private final RedissonClient redissonClient;
+
+    public TestController(RabbitTemplate rabbitTemplate,
+                          RedissonClient redissonClient) {
         this.rabbitTemplate = rabbitTemplate;
+        this.redissonClient = redissonClient;
     }
 
     @GetMapping("/send")
@@ -39,6 +47,13 @@ public class TestController {
         }
 
 
+        return R.ok();
+    }
+
+    @GetMapping("/delay")
+    public R testDelay() {
+//        RQueue<String> distinationQueue = new
+//        RDelayedQueue<String> delayedQueue = redissonClient.getDelayedQueue("test");
         return R.ok();
     }
 }
