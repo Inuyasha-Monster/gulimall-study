@@ -329,7 +329,7 @@ public class SeckillServiceImpl implements SeckillService {
                 if (count > 0 && num <= seckillLimit && count >= num) {
                     //4、验证这个人是否已经买过了（幂等性处理）,如果秒杀成功，就去占位。userId-sessionId-skuId
                     //SETNX 原子性处理
-                    String redisKey = user.getId() + "-" + skuId;
+                    String redisKey = SeckillConstant.USERID_SECKILL_POTMOTION_SKUID_PRE + user.getId() + "-" + skuId;
                     //设置自动过期(活动结束时间-当前时间)
                     long ttl = endTime - currentTime;
                     Boolean aBoolean = redisTemplate.opsForValue().setIfAbsent(redisKey, num.toString(), ttl, TimeUnit.MILLISECONDS);
