@@ -46,7 +46,7 @@ public class SeckillScheduled {
     @Scheduled(cron = "*/5 * * * * ?")
     public void uploadSeckillSkuLatest3Days() {
         //1、重复上架无需处理
-        log.info("上架秒杀的商品...");
+        log.info("开始上架秒杀的商品...");
 
         //分布式锁
         RLock lock = redissonClient.getLock(UPLOAD_LOCK);

@@ -34,7 +34,14 @@ public class OAuth2Controller {
     @Autowired
     private MemberFeignService memberFeignService;
 
-
+    /**
+     * 微博登录的回调函数
+     *
+     * @param code
+     * @param session
+     * @return
+     * @throws Exception
+     */
     @GetMapping(value = "/oauth2.0/weibo/success")
     public String weibo(@RequestParam("code") String code, HttpSession session) throws Exception {
 
@@ -69,8 +76,8 @@ public class OAuth2Controller {
 
                 //1、第一次使用session，命令浏览器保存卡号，JSESSIONID这个cookie
                 //以后浏览器访问哪个网站就会带上这个网站的cookie
-                //TODO 1、默认发的令牌。当前域（解决子域session共享问题）
-                //TODO 2、使用JSON的序列化方式来序列化对象到Redis中
+                // 1、默认发的令牌。当前域（解决子域session共享问题）
+                // 2、使用JSON的序列化方式来序列化对象到Redis中
 
                 // 使用spring session redis的方式存储
                 session.setAttribute(AuthServerConstant.LOGIN_USER, data);

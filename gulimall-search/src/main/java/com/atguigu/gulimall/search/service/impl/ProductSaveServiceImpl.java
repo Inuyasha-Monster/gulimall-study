@@ -6,6 +6,7 @@ import com.atguigu.gulimall.search.config.GulimallElasticSearchConfig;
 import com.atguigu.gulimall.search.constant.EsConstant;
 import com.atguigu.gulimall.search.service.ProductSaveService;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -51,9 +52,7 @@ public class ProductSaveServiceImpl implements ProductSaveService {
         //TODO 如果批量错误
         boolean hasFailures = bulk.hasFailures();
 
-        List<String> collect = Arrays.asList(bulk.getItems()).stream().map(item -> {
-            return item.getId();
-        }).collect(Collectors.toList());
+        List<String> collect = Arrays.stream(bulk.getItems()).map(BulkItemResponse::getId).collect(Collectors.toList());
 
         log.info("商品上架完成：{}", collect);
 

@@ -3,6 +3,7 @@ package com.atguigu.gulimall.seckill.service.impl;
 import com.alibaba.fastjson.JSON;
 
 import com.alibaba.fastjson.TypeReference;
+import com.atguigu.common.constant.SeckillConstant;
 import com.atguigu.common.to.mq.SeckillOrderTo;
 import com.atguigu.common.utils.R;
 import com.atguigu.common.vo.MemberResponseVo;
@@ -72,9 +73,8 @@ public class SeckillServiceImpl implements SeckillService {
 
     /**
      * 秒杀商品分布式信号量
-     */
-    private final String SKU_STOCK_SEMAPHORE = "seckill:stock:";
-
+     *//*
+    public final String SKU_STOCK_SEMAPHORE = "seckill:stock:";*/
     @Override
     public void uploadSeckillSkuLatest3Days() {
 
@@ -103,11 +103,12 @@ public class SeckillServiceImpl implements SeckillService {
      */
     private void saveSessionInfos(List<SeckillSessionWithSkusVo> sessions) {
 
-        sessions.forEach(session -> {
+        sessions.stream().filter(x -> x.getRelationSkus() != null && x.getRelationSkus().size() > 0).forEach(session -> {
 
             //获取当前活动的开始和结束时间的时间戳
             long startTime = session.getStartTime().getTime();
             long endTime = session.getEndTime().getTime();
+            final long expire = endTime - startTime;
 
             //存入到Redis中的key
             String key = SESSION_CACHE_PREFIX + startTime + "_" + endTime;
@@ -120,6 +121,7 @@ public class SeckillServiceImpl implements SeckillService {
                 List<String> skuIds = session.getRelationSkus().stream()
                         .map(item -> item.getPromotionSessionId() + "-" + item.getSkuId().toString()).collect(Collectors.toList());
                 redisTemplate.opsForList().leftPushAll(key, skuIds);
+                redisTemplate.expire(key, expire, TimeUnit.MILLISECONDS);
             }
         });
 
@@ -132,7 +134,7 @@ public class SeckillServiceImpl implements SeckillService {
      */
     private void saveSessionSkuInfo(List<SeckillSessionWithSkusVo> sessions) {
 
-        sessions.forEach(session -> {
+        sessions.stream().filter(x -> !CollectionUtils.isEmpty(x.getRelationSkus())).forEach(session -> {
             //准备hash操作，绑定hash
             BoundHashOperations<String, Object, Object> operations = redisTemplate.boundHashOps(SECKILL_CACHE_PREFIX);
             session.getRelationSkus().forEach(seckillSkuVo -> {
@@ -168,8 +170,8 @@ public class SeckillServiceImpl implements SeckillService {
 
                     //如果当前这个场次的商品库存信息已经上架就不需要上架
                     //5、使用库存作为分布式Redisson信号量（限流）
-                    // 使用库存作为分布式信号量
-                    RSemaphore semaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + token);
+                    // 使用库存作为分布式信号量 预热库存
+                    RSemaphore semaphore = redissonClient.getSemaphore(SeckillConstant.SKU_STOCK_SEMAPHORE + token);
                     // 商品可以秒杀的数量作为信号量
                     semaphore.trySetPermits(seckillSkuVo.getSeckillCount());
                 }
@@ -283,9 +285,9 @@ public class SeckillServiceImpl implements SeckillService {
     /**
      * 当前商品进行秒杀（秒杀开始）
      * todo:
-     * 1、上架商品的信息在redis当中需要设置过期时间
-     * 2、秒杀订单超时未支付同样需要解锁库存（redis的分布式信号量）
-     * 3、秒杀活动结束需要还原剩余的信号量到实际商品的库存系统中
+     * 1、上架商品的信息在redis当中需要设置过期时间: 秒杀活动设置TTL ok 秒杀商品需要考虑如何设置过期时间(hash->每一个sku一个过期时间) wait
+     * 2、秒杀订单超时未支付同样需要解锁库存（库存 => redis的分布式信号量） ok
+     * 3、秒杀活动结束需要还原剩余的信号量到实际商品的库存系统中 wait
      *
      * @param killId
      * @param key
@@ -321,7 +323,7 @@ public class SeckillServiceImpl implements SeckillService {
                 Integer seckillLimit = redisTo.getSeckillLimit();
 
                 //获取信号量
-                String seckillCount = redisTemplate.opsForValue().get(SKU_STOCK_SEMAPHORE + randomCode);
+                String seckillCount = redisTemplate.opsForValue().get(SeckillConstant.SKU_STOCK_SEMAPHORE + randomCode);
                 Integer count = Integer.valueOf(seckillCount);
                 //判断信号量是否大于0,并且购买数量不能大于限购数量,并且买的数量不能超过剩余库存
                 if (count > 0 && num <= seckillLimit && count >= num) {
@@ -333,7 +335,7 @@ public class SeckillServiceImpl implements SeckillService {
                     Boolean aBoolean = redisTemplate.opsForValue().setIfAbsent(redisKey, num.toString(), ttl, TimeUnit.MILLISECONDS);
                     if (aBoolean) {
                         //占位成功说明从来没有买过,分布式锁(获取信号量-1)
-                        RSemaphore semaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + randomCode);
+                        RSemaphore semaphore = redissonClient.getSemaphore(SeckillConstant.SKU_STOCK_SEMAPHORE + randomCode);
                         //TODO 秒杀成功，快速下单
                         boolean semaphoreCount = semaphore.tryAcquire(num, 100, TimeUnit.MILLISECONDS);
                         //保证Redis中还有商品库存
@@ -348,6 +350,7 @@ public class SeckillServiceImpl implements SeckillService {
                             orderTo.setPromotionSessionId(redisTo.getPromotionSessionId());
                             orderTo.setSkuId(redisTo.getSkuId());
                             orderTo.setSeckillPrice(redisTo.getSeckillPrice());
+                            orderTo.setRandomCode(randomCode);
                             rabbitTemplate.convertAndSend("order-event-exchange", "order.seckill.order", orderTo);
                             long s2 = System.currentTimeMillis();
                             log.info("耗时..." + (s2 - s1));

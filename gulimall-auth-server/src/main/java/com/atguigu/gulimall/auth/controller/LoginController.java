@@ -41,15 +41,6 @@ import java.util.stream.Collectors;
  */
 @Controller
 public class LoginController {
-//    @GetMapping("/login.html")
-//    public String loginPage() {
-//        return "login";
-//    }
-//
-//    @GetMapping("/reg.html")
-//    public String regPage() {
-//        return "reg";
-//    }
 
     @Autowired
     private ThirdPartFeignService thirdPartFeignService;
@@ -97,29 +88,13 @@ public class LoginController {
                            BindingResult result,
                            RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
-
             // 直接流式处理
             Map<String, String> errors = result.getFieldErrors()
                     .stream()
                     .collect(Collectors.groupingBy(FieldError::getField, Collectors.mapping(FieldError::getDefaultMessage, Collectors.joining(";"))));
 
-//            Map<String, List<FieldError>> groups = result.getFieldErrors().stream()
-//                    .collect(Collectors.groupingBy(FieldError::getField));
-//
-//            Map<String, String> errors = new HashMap<>(16);
-//            for (Map.Entry<String, List<FieldError>> group : groups.entrySet()) {
-//                String msgs = group.getValue().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.joining(";"));
-//                errors.putIfAbsent(group.getKey(), msgs);
-//            }
-
             redirectAttributes.addFlashAttribute("errors", errors);
-
-//            model.addAttribute("errors", errors);
-
             return "redirect:http://auth.gulimall.com/reg.html";
-
-            //效验出错回到注册页面
-//            return "redirect:http://auth.gulimall.com/reg.html";
         }
 
         //1、效验验证码

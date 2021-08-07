@@ -82,7 +82,7 @@ public class SeckillController {
 
         String orderSn = null;
         try {
-            //1、判断是否登录
+            //1、判断是否登录 ( LoginUserInterceptor 实现 )
             orderSn = seckillService.kill(killId, key, num);
             model.addAttribute("orderSn", orderSn);
         } catch (Exception e) {

@@ -2,6 +2,7 @@ package com.atguigu.gulimall.order.service.impl;
 
 import com.alibaba.fastjson.TypeReference;
 import com.atguigu.common.constant.CartConstant;
+import com.atguigu.common.constant.SeckillConstant;
 import com.atguigu.common.exception.NoSelectAnyCartItemException;
 import com.atguigu.common.exception.NoStockException;
 import com.atguigu.common.to.OrderTo;
@@ -23,7 +24,10 @@ import com.atguigu.gulimall.order.service.PaymentInfoService;
 import com.atguigu.gulimall.order.to.OrderCreateTo;
 import com.atguigu.gulimall.order.to.SpuInfoVo;
 import com.atguigu.gulimall.order.vo.*;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import org.redisson.api.RSemaphore;
+import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
@@ -94,7 +98,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
 
-    // 模拟内部Service方法相互调用且保证事务不会失效
+    // 模拟内部Serice方法相互调用且保证事务不会失效
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Transactional
     public void a() {
@@ -222,7 +229,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
         //通过lure脚本原子验证令牌和删除令牌
         Long result = redisTemplate.execute(new DefaultRedisScript<Long>(script, Long.class),
-                Arrays.asList(OrderConstant.USER_ORDER_TOKEN_PREFIX + memberResponseVo.getId()),
+                Collections.singletonList(OrderConstant.USER_ORDER_TOKEN_PREFIX + memberResponseVo.getId()),
                 orderToken);
 
         if (result == 0L) {
@@ -240,7 +247,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
             if (Math.abs(payAmount.subtract(payPrice).doubleValue()) < 0.01) {
                 //金额对比
-                //TODO 3、保存订单
+                //3、保存订单
                 saveOrder(order);
 
                 //4、库存锁定,只要有异常，回滚订单数据
@@ -258,7 +265,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 }).collect(Collectors.toList());
                 lockVo.setLocks(orderItemVos);
 
-                //TODO 调用远程锁定库存的方法
+                //调用远程锁定库存的方法
                 //出现的问题：扣减库存成功了，但是由于网络原因超时，出现异常，导致订单事务回滚，库存事务不回滚(解决方案：seata)
                 //为了保证高并发，不推荐使用seata，因为是加锁，并行化，提升不了效率,可以发消息给库存服务
                 R r = wmsFeignService.orderLockStock(lockVo);
@@ -266,12 +273,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                     //锁定成功
                     responseVo.setOrder(order.getOrder());
 
-                    // 测试分布式事务：seata + 以及mq的方式自动解锁库存
+                    // 测试分布式事务：seata
 //                    int i = 10 / 0;
 
-                    //TODO 订单创建成功，发送消息给MQ
+                    //订单创建成功，发送消息给MQ
                     rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", order.getOrder());
 
+                    //                    模拟发送MQ之后,订单后续逻辑出现异常,需要库存系统自动解锁锁定的库存
                     //                    int i = 10 / 0;
 
                     //删除购物车里的数据
@@ -282,8 +290,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                     //锁定失败
                     String msg = (String) r.get("msg");
                     throw new NoStockException(msg);
-                    // responseVo.setCode(3);
-                    // return responseVo;
                 }
 
             } else {
@@ -295,11 +301,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     @Override
     public OrderEntity getOrderByOrderSn(String orderSn) {
-        OrderEntity orderEntity = this.baseMapper.selectOne(new QueryWrapper<OrderEntity>().eq("order_sn", orderSn));
-
-        return orderEntity;
+        return this.baseMapper.selectOne(new QueryWrapper<OrderEntity>().eq("order_sn", orderSn));
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void closeOrder(OrderEntity orderEntity) {
         //关闭订单之前先查询一下数据库，判断此订单状态是否已支付
@@ -318,10 +323,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             BeanUtils.copyProperties(orderInfo, orderTo);
 
 //            try {
-            //TODO 确保每个消息发送成功，给每个消息做好日志记录，(给数据库保存每一个详细信息)保存每个消息的详细信息
+            // 确保每个消息发送成功，给每个消息做好日志记录，(给数据库保存每一个详细信息)保存每个消息的详细信息
+
+            // 另外一种思路: 本地事务 + 通过MQ消费者手动ack的方式保证异常错误的情况下重试保证逻辑完整
             rabbitTemplate.convertAndSend("order-event-exchange", "order.release.other", orderTo);
 //            } catch (Exception e) {
-//                //TODO 定期扫描数据库，重新发送失败的消息
+//                //定期扫描数据库，重新发送失败的消息
             // 出现异常直接返回出去，reject requeue到队列当中
 //            }
         }
@@ -408,7 +415,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     @Transactional(rollbackFor = {Exception.class})
     @Override
     public void createSeckillOrder(SeckillOrderTo orderTo) {
-        //TODO 保存订单信息
+        //保存订单信息
         OrderEntity orderEntity = new OrderEntity();
         orderEntity.setOrderSn(orderTo.getOrderSn());
         orderEntity.setMemberId(orderTo.getMemberId());
@@ -439,6 +446,27 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
         //保存订单项数据
         orderItemService.save(orderItem);
+
+        //设置秒杀订单超时处理逻辑
+        rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", orderTo);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void closeSeckillOrder(SeckillOrderTo seckillOrderTo) {
+        // 检查订单是否已经被支付(系统订单状态以及支付平台订单状态),如果是则跳过
+        final OrderEntity orderEntity = this.getOne(new LambdaQueryWrapper<OrderEntity>().eq(OrderEntity::getOrderSn, seckillOrderTo.getOrderSn()));
+        if (orderEntity != null && orderEntity.getStatus().equals(OrderStatusEnum.CREATE_NEW.getCode())) {
+            //代付款状态进行关单
+            OrderEntity orderUpdate = new OrderEntity();
+            orderUpdate.setId(orderEntity.getId());
+            orderUpdate.setStatus(OrderStatusEnum.CANCLED.getCode());
+            this.updateById(orderUpdate);
+
+            // 恢复分布式信号量的锁定库存
+            RSemaphore semaphore = redissonClient.getSemaphore(SeckillConstant.SKU_STOCK_SEMAPHORE + seckillOrderTo.getRandomCode());
+            semaphore.release(seckillOrderTo.getNum());
+        }
     }
 
     /**

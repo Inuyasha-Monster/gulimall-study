@@ -156,7 +156,6 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         if (skus != null && skus.size() > 0) {
 
-
             skus.forEach(item -> {
                 //在每个SKU中众多images中，只有一个是默认图片，当为默认图片时，default_img=1
                 String defaultImg = "";

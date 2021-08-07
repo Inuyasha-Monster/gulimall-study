@@ -83,7 +83,7 @@ public class SpuInfoController {
     public R save(@RequestBody SpuSaveVo spuSaveVo){
 //		spuInfoService.save(spuInfo);
 
-        // todo:接收参数检查
+        // 接收参数检查
 
         spuInfoService.saveSpuInfo(spuSaveVo);
         return R.ok();

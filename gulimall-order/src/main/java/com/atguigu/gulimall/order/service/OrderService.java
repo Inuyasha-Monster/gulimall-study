@@ -35,5 +35,7 @@ public interface OrderService extends IService<OrderEntity> {
     String handlePayResult(PayAsyncVo asyncVo);
 
     void createSeckillOrder(SeckillOrderTo orderTo);
+
+    void closeSeckillOrder(SeckillOrderTo seckillOrderTo);
 }
 

@@ -177,7 +177,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
                 register.setHeader(profileImageUrl);
             } else {
                 log.error("远程查询用户身份信息失败:" + EntityUtils.toString(response.getEntity()));
-                // todo:由于开发调试阶段当前用户必须是oauth开发者才可以调试通过,我们暂时采用随机字符作为用户名称
+                // 由于开发调试阶段当前用户必须是oauth开发者才可以调试通过,我们暂时采用随机字符作为用户名称
                 String randomUserName = UUID.randomUUID().toString().replace("-", "").substring(0, 5);
                 register.setNickname(randomUserName);
                 register.setGender(1);
@@ -201,12 +201,12 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
         String openid = (String) accessMap.get("openid");
 
         //3、拿到access_token 和 oppenid，再去请求微信提供固定的API，获取到扫码人的信息
-        //TODO 查询数据库当前用用户是否曾经使用过微信登录
+        //查询数据库当前用用户是否曾经使用过微信登录
 
         MemberEntity memberEntity = this.baseMapper.selectOne(new QueryWrapper<MemberEntity>().eq("social_uid", openid));
 
         if (memberEntity == null) {
-            System.out.println("新用户注册");
+            System.out.println("微信扫码新用户注册");
             //访问微信的资源服务器，获取用户信息
             String baseUserInfoUrl = "https://api.weixin.qq.com/sns/userinfo" +
                     "?access_token=%s" +

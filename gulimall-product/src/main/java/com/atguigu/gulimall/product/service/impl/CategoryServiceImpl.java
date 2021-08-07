@@ -72,7 +72,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Override
     public void removeMenuByIds(List<Long> asList) {
-        //TODO 检查当前的菜单是否被别的地方所引用
+        //检查当前的菜单是否被别的地方所引用
         categoryDao.deleteBatchIds(asList);
     }
 
@@ -107,7 +107,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
             relationService.updateCategory(category.getCatId(), category.getName());
         }
 
-        // todo:同时删除缓存的中的关联数据
+        // 同时删除缓存的中的关联数据 => CacheEvict
     }
 
     //    @Cacheable(value = {"category"}, key = "'level1Categorys'")

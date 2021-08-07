@@ -24,4 +24,4 @@ server:
 
 logging:
   level:
-    com.atguigu.gulimall: debug
+    com.atguigu.gulimall.ware: debug

@@ -42,5 +42,9 @@ public class SeckillOrderTo {
      */
     private Long memberId;
 
+    /**
+     * 秒杀商品的随机码
+     */
+    private String randomCode;
 
 }

@@ -27,6 +27,13 @@ public class OrderSeckillListener {
     @Autowired
     private OrderService orderService;
 
+    /**
+     * 实现秒杀订单的后续逻辑: 保存订单信息 -> 超时支付自动解锁库存(归还到分布式信号量中)
+     * @param orderTo
+     * @param channel
+     * @param message
+     * @throws IOException
+     */
     @RabbitHandler
     public void listener(SeckillOrderTo orderTo, Channel channel, Message message) throws IOException {
 

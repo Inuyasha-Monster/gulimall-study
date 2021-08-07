@@ -72,8 +72,8 @@ public class WxApiController {
 
                 //1、第一次使用session，命令浏览器保存卡号，JSESSIONID这个cookie
                 //以后浏览器访问哪个网站就会带上这个网站的cookie
-                //TODO 1、默认发的令牌。当前域（解决子域session共享问题）
-                //TODO 2、使用JSON的序列化方式来序列化对象到Redis中
+                //1、默认发的令牌。当前域（解决子域session共享问题）
+                //2、使用JSON的序列化方式来序列化对象到Redis中
                 session.setAttribute(AuthServerConstant.LOGIN_USER, data);
 
                 //2、登录成功跳回首页
@@ -108,8 +108,8 @@ public class WxApiController {
                 "#wechat_redirect";
 
         //对redirect_url进行URLEncoder编码
-        String redirect_url = ConstantWxUtils.WX_OPEN_REDIRECT_URL;
-        redirect_url = URLEncoder.encode(redirect_url, "UTF-8");
+        String redirectUrl = ConstantWxUtils.WX_OPEN_REDIRECT_URL;
+        redirectUrl = URLEncoder.encode(redirectUrl, "UTF-8");
 
         // 防止csrf攻击（跨站请求伪造攻击）
         //String state = UUID.randomUUID().toString().replaceAll("-", "");//一般情况下会使用一个随机数
@@ -125,7 +125,7 @@ public class WxApiController {
         String url = String.format(
                 baseUrl,
                 ConstantWxUtils.WX_OPEN_APP_ID,
-                redirect_url,
+                redirectUrl,
                 "xunqi"
         );
 
