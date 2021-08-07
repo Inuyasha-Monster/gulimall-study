@@ -353,7 +353,7 @@ public class SeckillServiceImpl implements SeckillService {
                             orderTo.setRandomCode(randomCode);
                             rabbitTemplate.convertAndSend("order-event-exchange", "order.seckill.order", orderTo);
                             long s2 = System.currentTimeMillis();
-                            log.info("耗时..." + (s2 - s1));
+                            log.info("成功秒杀的耗时..." + (s2 - s1));
                             return timeId;
                         }
                     }
